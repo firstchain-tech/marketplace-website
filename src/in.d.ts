@@ -1,0 +1,5 @@
+declare module '*.mp4'
+declare module '*.ogg'
+declare module '*.gltf'
+declare module 'web3.storage/dist/bundle.esm.min.js'
+declare module 'bs58'
