@@ -1,0 +1,22 @@
+{
+  "igoList": [{
+    "key": "0",
+    "name": "IGO-001 Donation",
+    "icon": "./igostatic/icon1.png",
+    "img": "./igostatic/img1.png",
+    "content": [
+      "Decentralized Autonomous Market",
+      "Markets are complementary to a set of public goods. We can design markets with the goal of maximizing the public goods they produce.",
+      "Goal-oriented: what the market is trying to do is objectively quantifiable in an agreed-upon way.",
+      "No permission: Anyone can participate in or propose changes to the structure. If they are expected to improve the goals of the organization, they are included, regardless of the identity or control of the proposer. The marginal value of the contribution is estimated ex post, the market Income streams are prorated.",
+      "algorithm:",
+      "In escrow transactions between buyers and sellers, the decision to release the escrow depends on the role of the 'analyst'. Being a validator is in control of the NFT, and if malicious behavior by the validator is observed, the DAO can destroy the token currency.",
+      "Unprecedented, User-Owned Marketplace",
+      "Potential changes in market structure are at the discretion of market operators. A permissionless market is one where anyone can propose changes to the market structure, and the computations used to evaluate it pre-specified processes, ultimately relying on randomized experiments to anchor the mechanism. Not all proposed market structure changes can be completely randomized, and even those that can be proposed alternatives may be costly ex ante and unavoidable. We use randomization where feasible. If not, we arrive at a counterfactual estimate Two-sided online marketplaces are often guided by subsidized supply (Sean; reference playbook more generally?). This subsidy comes from the sale of corporate equity. User-owned markets disintermediate it, providing ownership directly to participants proportional to the value they add to the network (to-do: how to estimate the marginal value of a given unit of supply or demand?).",
+      "Producers are users"
+    ],
+    "title": "Funding Ethereum Announcement Products",
+    "serialNumber": "igodonation1"
+  }],
+  "igoDefaultEmail": "collex.club@gmail.com"
+}
