@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "/static/css/main.8fa694af.css",
+    "main.js": "/static/js/main.a3fc7c52.js",
+    "static/js/787.73cfc92c.chunk.js": "/static/js/787.73cfc92c.chunk.js",
+    "static/media/banner.png": "/static/media/banner.d28a1c69c288bbd2e493.png",
+    "static/media/logo.png": "/static/media/logo.84f7bace2e26694894d7.png",
+    "static/media/logo_footer.png": "/static/media/logo_footer.84f7bace2e26694894d7.png",
+    "static/media/metis-min.svg": "/static/media/metis-min.eb9a0a43b833a1e621240af75908147f.svg",
+    "static/media/findora-min.svg": "/static/media/findora-min.900c3d14deb2d4b75f9c04263afd224a.svg",
+    "static/media/metis.svg": "/static/media/metis.69bc7c759a05b753e94fdb9f3621c4bd.svg",
+    "static/media/metamask.svg": "/static/media/metamask.576281bfee1ad8e6f2b14030e2307e5f.svg",
+    "static/media/findora.svg": "/static/media/findora.a334b4efd3a00cbbc747d2c4cb48fc6b.svg",
+    "static/media/Ethereum-min.svg": "/static/media/Ethereum-min.3438deeab569615597420a8302bf2b7f.svg",
+    "static/media/Binance-min.svg": "/static/media/Binance-min.9d44498a6efb922a4aefd97c4450bc6d.svg",
+    "static/media/network_default.svg": "/static/media/network_default.7553c1e5453d30a8b815fef10e268899.svg",
+    "static/media/wallet-connect.svg": "/static/media/wallet-connect.16a363ed845f0b40067977c0dd172384.svg",
+    "static/media/usdt.svg": "/static/media/usdt.4e9bf1c0d60589c3b3ac60d927cd6c96.svg",
+    "static/media/BNB.svg": "/static/media/BNB.59a60951c8e18b6ce6f1b1acead1f51d.svg",
+    "index.html": "/index.html",
+    "static/media/ETH.svg": "/static/media/ETH.ff9b96b6987af726194a12c6e62e01b7.svg",
+    "main.8fa694af.css.map": "/static/css/main.8fa694af.css.map",
+    "main.a3fc7c52.js.map": "/static/js/main.a3fc7c52.js.map",
+    "787.73cfc92c.chunk.js.map": "/static/js/787.73cfc92c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8fa694af.css",
+    "static/js/main.a3fc7c52.js"
+  ]
+}
