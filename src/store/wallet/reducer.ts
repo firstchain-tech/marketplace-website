@@ -4,6 +4,7 @@ const initState: any = {
   network: localStorage.getItem('chainId') ? Number(localStorage.getItem('chainId')) : 1,
   islogin: localStorage.getItem('isLogin') ? true : false,
   wallet: localStorage.getItem('wallet') || 'NetWork',
+  loading: false,
 }
 
 export default function reducer(state = initState, action: any) {
@@ -15,6 +16,8 @@ export default function reducer(state = initState, action: any) {
       return { ...state, network: action.network }
     case actionTypes.SAVE_WALLET:
       return { ...state, wallet: action.wallet }
+    case actionTypes.SAVE_IS_LOADING:
+      return { ...state, loading: action.loading }
     default:
       return state
   }

@@ -612,6 +612,8 @@ export const TableList = styled.table`
   background: #ffffff;
   border-radius: 0.63rem;
   width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
   tr {
     width: 100%;
     th {

@@ -110,7 +110,7 @@ export default memo(function HomePages(pages: any) {
                     <ImageDiv>
                       <img src={item.cover || item.image} alt={item.name} />
                     </ImageDiv>
-                    <span>{item.name}</span>
+                    <span>{item.isDefault ? `${item.name}${item.tokenId}` : item.name}</span>
                   </ListInfo>
                 </TweenOne>
               ))}
@@ -125,6 +125,7 @@ export default memo(function HomePages(pages: any) {
                 <ul>
                     <li>{t('home.about.list.1')}</li>
                     <li>{t('home.about.list.2')}</li>
+                    <li>{t('home.about.list.3')}</li>
                 </ul>
           </AboutDivContent>
         </AboutDiv> */}
@@ -141,28 +142,28 @@ export default memo(function HomePages(pages: any) {
                   <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
                     <li>{t('home.about.list.2')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 200 }}>
                     <li>{t('home.about.list.3')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 250 }}>
                     <li>{t('home.about.list.4')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 300 }}>
                     <li>{t('home.about.list.5')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 350 }}>
                     <li>{t('home.about.list.6')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 400 }}>
                     <li>{t('home.about.list.7')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 450 }}>
                     <li>{t('home.about.list.8')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 500 }}>
                     <li>{t('home.about.list.9')}</li>
                   </TweenOne>
-                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 150 }}>
+                  <TweenOne animation={{ y: 30, opacity: 0, type: 'from', ease: 'easeOutQuad', delay: 550 }}>
                     <li>{t('home.about.list.10')}</li>
                   </TweenOne>
                 </ul>

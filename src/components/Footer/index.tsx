@@ -22,7 +22,7 @@ const FooterWrapper = styled.div`
     align-items: flex-end;
   }
   .logo {
-    width: 9.13rem;
+    width: 10.06rem;
     height: auto;
     margin-bottom: 3rem;
   }
@@ -141,7 +141,7 @@ export default memo(function FooterPages(props: Types) {
         </Col>
         <Col span={8} md={{ span: 4 }} className="footer-right">
           <FooterIcon>
-            <a href="https://twitter.com/collexclub" target="_blank">
+            <a href="https://twitter.com/collexclub" target="_blank" rel="noreferrer">
               <Image preview={false} src={FOOTER_1} width="1.88rem" height="1.56rem" />
             </a>
             <Image preview={false} src={FOOTER_2} width="1.88rem" height="1.38rem" />

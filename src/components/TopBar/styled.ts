@@ -18,6 +18,11 @@ export const TopBarWrapper = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    a {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     ${(props) => props.theme.mediaWidth.screenLg`
       justify-content: flex-start;
     `}

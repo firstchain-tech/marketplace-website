@@ -90,3 +90,16 @@ export const fuzzyMatch = (str: string, key: string) => {
   }
   return flag
 }
+
+export const isJson = (str: any) => {
+  if (typeof str == 'string') {
+    try {
+      // eslint-disable-next-line
+      let obj = JSON.parse(str)
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+  return false
+}

@@ -18,3 +18,51 @@ export const ImageError =
 
 export const FILTER_ICON =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAWCAYAAAAxSueLAAAAAXNSR0IArs4c6QAAA8dJREFUSEutll1oW2UYx5/nfU+Sjti6hbUls87COlSKClJsTU4aetHSIUX8yvVEUBRxjs3i1QxU6oV4IYiC03uNOAdDSenHqWk46eiFsIIDcUi1LGhZbBFDc5Lz/uWpCZSySk/xgXNxPt7zez7/78vFYvEMgDgzK2MM/Z+mlCIAhpnL9Xp9hZeWlpaZ+QQAZmYcAiZrWpcsV81/CYib737TWl/iYrF4noiOE1HrxYF4AATQEA+JKMzMIWOMz8w1ZvaJyAKgBQbgFoBr7LrukVqtJg8DWSwWw9bWVgcznwLQp5Q6CeAOgJ+Z+WZHR8edSqUijtDGxoaXyWS8nZugJulZXFw8ZVnWeWYeJ6K2VmYASLQrjUbjAwArIyMjjdb/DwUrFosPAvhcKfUQgJ+YWdK0AeAeZn6AiB4DUGHmi8lkMs/MO50XCCYRlUqlE77vTzHz80T0GYCPtNabSqlGJBJR9Xq9zfO8p4loCsBtpdTZ2dnZG9ls1gSCzczMRKPR6BtE9BYRlQC8mkqlft1bhnw+H4tGo+8w80sAclrri4lE4t8CHtQKhUKnUuoyEdlE9HIymfxmv3EplUoP+75/VTrTsqynBgcHf+H5+fn7LMsK3w0YDoehtd6ORqOV/v5+z3GcnlAo9C0RHbUs68zQ0NCP+zm6vLzcXa/XrzBzr1LqhUQi4cqcfU9E9++zSGZp1RhzaXh4+MZumO/74+l0+uZ/wRqNxtdE1AvguVQqdT0QTNKotb4M4EkietG27e/2g7mu22eMuUZEfwN4VmobKI3NBjlHRBeI6AqAyVQq9edeoAiF7/vnmHmSmb+KRCKTAwMDW4EaRFp/YWHhZCQS+ZCIEgDe1lpfrdVqVZGurq4utba21tbe3v64NJIxRjPz63Nzc/nArd+KwHXdJ4wxnxLRMSJyAKwqpX6XoQZwmpmfARAjoveY+WPbtv8KPNQtWC6X093d3Y9qrSWdCVH6XWovOntEBBmA1DXfVP5gCrK3No7jHA+FQr3GmD5p8aba/0FEnUQku8kKEb1m2/btQ0e2FyqR9vT0hNfX16mzs7OutT7GzO+KpAGY3tzc/GRiYqLKjuOIYlsHVZG7fed5HsbGxqq71cR13UcAfAkgAuCVcrnsyJy92Qw70Oa5Cyr1ElDe87wfWltKLpcLx+Pxs0qpaQD57e3tCwJbJaJ7D3ssaK6T3fmLarX6/ujo6FbLkUKhEFdKTYkz4XB4Ws4g40qpuO/7ksrAZxCttWRk2xhzvVwu38pkMnIk2LFsNqvS6XSXfOP7/sY/G5rraqIAxc4AAAAASUVORK5CYII='
+
+export const Default_data = {
+  name: 'NFT-',
+  image: 'QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt',
+  cover: 'QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt',
+  coverFiles: 'https://ipfs.io/ipfs/QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt/1443264622977020.png',
+  imageFiles: 'https://ipfs.io/ipfs/QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt/1443264622977020.png',
+  categoriesName: '0xf9aa8f8b08742849cd8237a0f6be6415665bb69f43a79dbec8fdbe38efc593da',
+  myAddress: '',
+  isDefault: true,
+}
+
+export const Default_data_theme = {
+  name: 'Untitled Collection',
+  cover: 'QmUHj2SsgLWcku3eC6JVVxwaNZm7QCXX82d2Tz6E14YpbJ',
+  coverFiles: 'https://ipfs.io/ipfs/QmUHj2SsgLWcku3eC6JVVxwaNZm7QCXX82d2Tz6E14YpbJ/1468329347558760.png',
+  myAddress: '',
+  isDefault: true,
+}
+
+export const Default_data_arr = [
+  {
+    cid: 'QmdkyBHzQozd3JrJYtqor6h2mSGKGKNuyU5jPKQtmfEGh4',
+    jsonSource: {
+      name: 'NFT-',
+      image: 'QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt',
+      cover: 'QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt',
+      coverFiles: 'https://ipfs.io/ipfs/QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt/1443264622977020.png',
+      imageFiles: 'https://ipfs.io/ipfs/QmUAqMQMfRuTvRNkCz1sfcW7k8hgazyBoLtLQi9nMBucJt/1443264622977020.png',
+      categoriesName: '0xf9aa8f8b08742849cd8237a0f6be6415665bb69f43a79dbec8fdbe38efc593da',
+      myAddress: '',
+      isDefault: true,
+    },
+  },
+]
+
+export const Default_data_theme_arr = [
+  {
+    cid: 'Qmf9F55Ei4pa2F9uVy9KaV97Eq71RXov2AiugEBUtTpw8M',
+    jsonSource: {
+      name: 'Untitled Collection',
+      cover: 'QmUHj2SsgLWcku3eC6JVVxwaNZm7QCXX82d2Tz6E14YpbJ',
+      coverFiles: 'https://ipfs.io/ipfs/QmUHj2SsgLWcku3eC6JVVxwaNZm7QCXX82d2Tz6E14YpbJ/1468329347558760.png',
+      myAddress: '',
+      isDefault: true,
+    },
+  },
+]

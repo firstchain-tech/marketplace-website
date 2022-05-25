@@ -7,7 +7,6 @@ import FundSplitter from './abis/FundSplitter.json'
 import Market from './abis/Market.json'
 import MarketSharedToken from './abis/MarketSharedToken.json'
 import USDT from './abis/USDT.json'
-import IUniswapV2Pair from './abis/IUniswapV2Pair.json'
 
 const constants: any = {
   prd: prdConstants,
@@ -30,9 +29,9 @@ export const Market_ABI: any = Market
 export const FundSplitter_ABI: any = FundSplitter
 export const MarketSharedToken_ABI: any = MarketSharedToken
 export const USDT_ABI: any = USDT
-export const IUniswapV2Pair_ABI: any = IUniswapV2Pair
 
 export const getActiveChainId = (arr: any, network: any) => {
+  if (network === null) return false
   let objChainId = Object.keys(arr)
   let isTrue = objChainId.some((item) => item === network.toString())
   return isTrue

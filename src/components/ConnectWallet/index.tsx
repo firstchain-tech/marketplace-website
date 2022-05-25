@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react'
+import React, { memo, useEffect, useState, useRef } from 'react'
 import {
   ConnectWalletWrapper,
   ModalTitle,
@@ -9,14 +9,13 @@ import {
   WalletDivCreate,
   DivTest,
 } from './styled'
-import { Button, Image, Row, Col, Modal, Divider, message, Drawer } from 'antd'
+import { Button, Image, Row, Col, Modal, Divider, message, Drawer, Spin } from 'antd'
 import { Web3Provider } from '@ethersproject/providers'
 import { useWeb3React } from '@web3-react/core'
 import { useDispatch, useSelector } from 'react-redux'
 import { SetActivaing } from '@/store/connector/action'
 import { connectorsByName, defaultChainId, getActiveChainId, RPC_URLS, netWorkInit } from '@/contracts/constant'
 import { useTranslation } from 'react-i18next'
-import Loading from '@/components/Loading'
 import { formatStrAddress, AdaptFontSize } from '@/utils'
 import { netWorks } from '@/contracts/constant'
 import { SaveIsLogin, SaveWallet, SaveNetwork } from '@/store/wallet/action'
@@ -36,6 +35,7 @@ export default memo(function ConnectWalletPage(props: Type) {
   // @ts-ignore
   const { ethereum } = window
   let history = useHistory()
+  const modalRef = useRef<any>(null)
 
   const { status = '' } = props
 
@@ -344,7 +344,7 @@ export default memo(function ConnectWalletPage(props: Type) {
   )
 
   return (
-    <ConnectWalletWrapper className="connect-wallet">
+    <ConnectWalletWrapper className="connect-wallet" ref={modalRef}>
       {!active && status === 'create' && (
         <WalletDivCreate>
           <WalletDiv />
@@ -388,9 +388,11 @@ export default memo(function ConnectWalletPage(props: Type) {
           width="36.88rem"
           wrapClassName="wallets"
           centered
+          getContainer={modalRef.current}
         >
-          <WalletDiv />
-          {loading && <Loading />}
+          <Spin spinning={loading} tip="Loading...">
+            <WalletDiv />
+          </Spin>
         </Modal>
       )}
       {windowSize.innerWidth <= AdaptFontSize && (

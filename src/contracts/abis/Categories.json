@@ -5,6 +5,24 @@
       {
         "indexed": false,
         "internalType": "bytes32",
+        "name": "collectionHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "colletion",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
         "name": "name",
         "type": "bytes32"
       }
@@ -37,8 +55,14 @@
       {
         "indexed": false,
         "internalType": "bytes32",
-        "name": "name",
+        "name": "collectionHash",
         "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       }
     ],
     "name": "Removed",
@@ -50,6 +74,11 @@
         "internalType": "bytes32",
         "name": "name",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "colletion",
+        "type": "address"
       }
     ],
     "name": "add",
@@ -125,7 +154,7 @@
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "name",
+        "name": "collectionHash",
         "type": "bytes32"
       }
     ],

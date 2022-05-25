@@ -27,7 +27,6 @@ import {
 } from './styled'
 import { ImageError } from '@/common/init'
 import { MenusList } from '@/components/SelectNetWork/styled'
-import Loading from '@/components/Loading'
 import { Adapth5 } from '@/utils'
 import Select, { components } from 'react-select'
 import { message } from 'antd'
@@ -69,7 +68,8 @@ export default memo(function TradingFloorPage(props: any) {
   const marketH5Drawer = useRef<any>(null)
 
   const nftData: ConstantInitTypes = useDataHooks()
-  const { tradePageSize, Blockchain, payTokenOptions, web3, constant, toWeiFromWei, Market_ADDRESS, SharedToken_ADDRESS } = nftData
+  const { toWeiFromMwei, marketPageSize, Blockchain, payTokenOptions, web3, constant, toWeiFromWei, Market_ADDRESS, SharedToken_ADDRESS } =
+    nftData
 
   const [currentDetails, setCurrentDetails] = useState<CardType>(currentDetailsInit)
   const [nftListStatus, setNftListStatus] = useState<NftListType[]>(JSON.parse(JSON.stringify(nftListStatusInit)))
@@ -90,17 +90,19 @@ export default memo(function TradingFloorPage(props: any) {
   const [currentStatus, setCurrentStatus] = useState<'list' | 'details'>('list')
 
   const [isRefreshData, setIsRefreshData] = useState(false)
-  const [isLoading, setIsloading] = useState(false)
 
   const myAddress = useSelector((state: any) => state.userInfo.address)
 
-  const { tradList, loading, openBoxList, detailsLoading } = useMarketHooks({ isRefreshData, currentDetails })
+  const { tradList, loading, openBoxList, detailsLoading } = useMarketHooks({ isRefreshData, currentDetails, myAddress })
   const { windowSize } = useWindowSizeHooks()
   const [moveSwitch, setMoveSwitch] = useState(false)
 
   const [type, setType] = useState<string>('.png')
   const [searchValue, setSearchValue] = useState<any>(undefined)
   const searchRef = useRef<any>(null)
+
+  const [spinLoading, setSpinLoading] = useState(false)
+  const [loadingText, setLoadingText] = useState<string>('Loading...')
 
   useEffect(() => {
     const search = props.location.search
@@ -259,7 +261,8 @@ export default memo(function TradingFloorPage(props: any) {
       })
       return false
     }
-    setIsloading(true)
+    setLoadingText('Purchasing...')
+    setSpinLoading(true)
     buyNftNativeImplement(params)
   }
 
@@ -279,7 +282,7 @@ export default memo(function TradingFloorPage(props: any) {
           })
           history.replace('/market')
           setIsRefreshData(!isRefreshData)
-          setIsloading(false)
+          setSpinLoading(false)
         })
         .on('error', function (error: any, receipt: any) {
           message.error({
@@ -287,19 +290,19 @@ export default memo(function TradingFloorPage(props: any) {
             className: 'message-global',
           })
           console.log('购买error', error)
-          setIsloading(false)
+          setSpinLoading(false)
         })
     } catch (error) {
-      setIsloading(false)
+      setSpinLoading(false)
       console.log('error', error)
     }
   }
 
   const buyClickUsdt = async (params: CardType) => {
     let balanceUsdt = await constant.ContractUsdt.methods.balanceOf(myAddress).call()
-    let balanceToWei = toWeiFromWei(balanceUsdt)
+    let balanceToWei = toWeiFromMwei(balanceUsdt)
     console.log('balanceUsdt', balanceUsdt)
-    let pricesToWei = toWeiFromWei(params.price)
+    let pricesToWei = toWeiFromMwei(params.price)
     if (Number(pricesToWei) > Number(balanceToWei)) {
       message.warning({
         content: `${t('market.message.tips4', { msg: 'USDT' })} ${balanceToWei}`,
@@ -307,7 +310,9 @@ export default memo(function TradingFloorPage(props: any) {
       })
       return false
     }
-    setIsloading(true)
+    setLoadingText('Purchasing...')
+    setSpinLoading(true)
+    console.log('params', params)
     buyNftUsdtisAuthorize(params)
   }
 
@@ -331,11 +336,11 @@ export default memo(function TradingFloorPage(props: any) {
               content: error.message,
               className: 'message-global',
             })
-            setIsloading(false)
+            setSpinLoading(false)
           })
       } else buyNftUsdtImplement(params)
     } catch (error) {
-      setIsloading(false)
+      setSpinLoading(false)
       console.log('error', error)
     }
   }
@@ -356,7 +361,7 @@ export default memo(function TradingFloorPage(props: any) {
           })
           history.replace('/market')
           setIsRefreshData(!isRefreshData)
-          setIsloading(false)
+          setSpinLoading(false)
         })
         .on('error', function (error: any, receipt: any) {
           message.error({
@@ -364,10 +369,10 @@ export default memo(function TradingFloorPage(props: any) {
             className: 'message-global',
           })
           console.log('购买error', error)
-          setIsloading(false)
+          setSpinLoading(false)
         })
     } catch (error) {
-      setIsloading(false)
+      setSpinLoading(false)
       console.log('error', error)
     }
   }
@@ -385,7 +390,7 @@ export default memo(function TradingFloorPage(props: any) {
     })
     setNftListStatus(() => {
       list = list.sort((n1: any, n2: any) => {
-        return n1.value - n2.value
+        return n1.key - n2.key
       })
       return JSON.parse(JSON.stringify(list))
     })
@@ -521,126 +526,127 @@ export default memo(function TradingFloorPage(props: any) {
   }
 
   return (
-    <TradingFloorWrapper ref={marketH5Drawer}>
-      <H5Trading />
-      {currentStatus === 'list' && (
-        <>
-          {windowSize.innerWidth < Adapth5 && (
-            <>
-              <H5Bottom>
-                <Button className="su-btn" onClick={() => setMoveSwitch(true)}>
-                  {t('market.left.title')}
-                </Button>
-              </H5Bottom>
-            </>
-          )}
-          <Row>
-            {windowSize.innerWidth >= Adapth5 && (
-              <Col
-                span={isShow ? 8 : 2}
-                md={isShow ? 6 : 2}
-                xl={isShow ? 4 : 2}
-                className={isShow ? 'left' : ''}
-                style={{
-                  borderRight: '1px solid #e5e5e5',
-                }}
-              >
-                <TradingFloorLeft>
-                  {!isShow && <RightCircleOutlined className="left-icon" onClick={() => setIsShow(true)} />}
-                  {isShow && (
-                    <RightContent>
-                      <SelectionDiv>
-                        <div>
-                          <Image src={FILTER_ICON} width="1.48rem" preview={false}></Image>
-                          <span>{t('market.left.title')}</span>
-                        </div>
-                        <LeftCircleOutlined className="left-active-icon" onClick={() => setIsShow(false)} />
-                      </SelectionDiv>
-
-                      <RightTitle>{t('market.left.title.vice1')}</RightTitle>
-                      <div className="nft-list">
-                        {nftListStatus.map((item, i) => (
-                          <Button className={item.active ? 'nft-btn active' : 'nft-btn'} key={i} onClick={() => nftListClick(item)}>
-                            {item.lable}
-                          </Button>
-                        ))}
-                      </div>
-
-                      <RightTitle>{t('market.left.title.vice2')}</RightTitle>
-                      <PriceDivCard>
-                        <Col span={20}>
-                          <Select
-                            menuIsOpen={isMaskOptions}
-                            onMenuOpen={() => setIsMaskOptions(true)}
-                            onMenuClose={() => setIsMaskOptions(false)}
-                            styles={customStylesPay}
-                            isSearchable={false}
-                            options={payTokenOptions}
-                            placeholder={t('market.input.placeholder1')}
-                            onChange={selectPayOnChange}
-                            value={selectPayActive}
-                            components={{ DropdownIndicator: DropdownIndicatorPrice, MenuList, Control: Control1 }}
-                          />
-                        </Col>
-                      </PriceDivCard>
-
-                      <Row className="price-number">
-                        <Col span={11}>
-                          <InputNumber
-                            type="number"
-                            precision={6}
-                            placeholder="MIN"
-                            min={0}
-                            max={999999999.999999}
-                            value={priceNum.min}
-                            onChange={(s) => setPriceNum({ ...priceNum, min: s })}
-                          />
-                        </Col>
-                        <Col span={2} className="price-num-to">
-                          to
-                        </Col>
-                        <Col span={11}>
-                          <InputNumber
-                            type="number"
-                            precision={6}
-                            placeholder="MAX"
-                            min={priceNum.min}
-                            max={999999999.999999}
-                            onChange={(s) => setPriceNum({ ...priceNum, max: s })}
-                            value={priceNum.max}
-                          />
-                        </Col>
-                      </Row>
-                      <Button className="apply-btn" type="primary" onClick={applyClickNum}>
-                        {t('market.left.title.vice2.btn')}
-                      </Button>
-                      <RightTitle>{t('market.left.title.vice3')}</RightTitle>
-                      <SelectNetWork status="Market" />
-                    </RightContent>
-                  )}
-                </TradingFloorLeft>
-              </Col>
+    <Spin spinning={spinLoading} tip={loadingText} className="antd-loadings">
+      <TradingFloorWrapper ref={marketH5Drawer}>
+        <H5Trading />
+        {currentStatus === 'list' && (
+          <>
+            {windowSize.innerWidth < Adapth5 && (
+              <>
+                <H5Bottom>
+                  <Button className="su-btn" onClick={() => setMoveSwitch(true)}>
+                    {t('market.left.title')}
+                  </Button>
+                </H5Bottom>
+              </>
             )}
+            <Row>
+              {windowSize.innerWidth >= Adapth5 && (
+                <Col
+                  span={isShow ? 8 : 2}
+                  md={isShow ? 6 : 2}
+                  xl={isShow ? 4 : 2}
+                  className={isShow ? 'left' : ''}
+                  style={{
+                    borderRight: '1px solid #e5e5e5',
+                  }}
+                >
+                  <TradingFloorLeft>
+                    {!isShow && <RightCircleOutlined className="left-icon" onClick={() => setIsShow(true)} />}
+                    {isShow && (
+                      <RightContent>
+                        <SelectionDiv>
+                          <div>
+                            <Image src={FILTER_ICON} width="1.48rem" preview={false}></Image>
+                            <span>{t('market.left.title')}</span>
+                          </div>
+                          <LeftCircleOutlined className="left-active-icon" onClick={() => setIsShow(false)} />
+                        </SelectionDiv>
 
-            <Col span={24} md={isShow ? 17 : 22} xl={isShow ? 17 : 22}>
-              <TradingFloorTitle active={isShow}>
-                <Title>
-                  <Link to={'/market'}>{t('market.title')}</Link>
-                </Title>
-                <SearchInput>
-                  <Input.Search
-                    ref={searchRef}
-                    onBlur={({ target }) => onSearch(target.value)}
-                    placeholder="search"
-                    defaultValue={searchValue}
-                    onSearch={onSearch}
-                  />
-                </SearchInput>
-              </TradingFloorTitle>
-              <TradingFloorContent active={isShow}>
-                <TitlteRight>
-                  <div className="left">
-                    {nftListStatus
+                        <RightTitle>{t('market.left.title.vice1')}</RightTitle>
+                        <div className="nft-list">
+                          {nftListStatus.map((item, i) => (
+                            <Button className={item.active ? 'nft-btn active' : 'nft-btn'} key={i} onClick={() => nftListClick(item)}>
+                              {item.lable}
+                            </Button>
+                          ))}
+                        </div>
+
+                        <RightTitle>{t('market.left.title.vice2')}</RightTitle>
+                        <PriceDivCard>
+                          <Col span={20}>
+                            <Select
+                              menuIsOpen={isMaskOptions}
+                              onMenuOpen={() => setIsMaskOptions(true)}
+                              onMenuClose={() => setIsMaskOptions(false)}
+                              styles={customStylesPay}
+                              isSearchable={false}
+                              options={payTokenOptions}
+                              placeholder={t('market.input.placeholder1')}
+                              onChange={selectPayOnChange}
+                              value={selectPayActive}
+                              components={{ DropdownIndicator: DropdownIndicatorPrice, MenuList, Control: Control1 }}
+                            />
+                          </Col>
+                        </PriceDivCard>
+
+                        <Row className="price-number">
+                          <Col span={11}>
+                            <InputNumber
+                              type="number"
+                              precision={6}
+                              placeholder="MIN"
+                              min={0}
+                              max={999999999.999999}
+                              value={priceNum.min}
+                              onChange={(s) => setPriceNum({ ...priceNum, min: s })}
+                            />
+                          </Col>
+                          <Col span={2} className="price-num-to">
+                            to
+                          </Col>
+                          <Col span={11}>
+                            <InputNumber
+                              type="number"
+                              precision={6}
+                              placeholder="MAX"
+                              min={priceNum.min}
+                              max={999999999.999999}
+                              onChange={(s) => setPriceNum({ ...priceNum, max: s })}
+                              value={priceNum.max}
+                            />
+                          </Col>
+                        </Row>
+                        <Button className="apply-btn" type="primary" onClick={applyClickNum}>
+                          {t('market.left.title.vice2.btn')}
+                        </Button>
+                        <RightTitle>{t('market.left.title.vice3')}</RightTitle>
+                        <SelectNetWork status="Market" />
+                      </RightContent>
+                    )}
+                  </TradingFloorLeft>
+                </Col>
+              )}
+
+              <Col span={24} md={isShow ? 17 : 22} xl={isShow ? 17 : 22}>
+                <TradingFloorTitle active={isShow}>
+                  <Title>
+                    <Link to={'/market'}>{t('market.title')}</Link>
+                  </Title>
+                  <SearchInput>
+                    <Input.Search
+                      ref={searchRef}
+                      onBlur={({ target }) => onSearch(target.value)}
+                      placeholder="search"
+                      defaultValue={searchValue}
+                      onSearch={onSearch}
+                    />
+                  </SearchInput>
+                </TradingFloorTitle>
+                <TradingFloorContent active={isShow}>
+                  <TitlteRight>
+                    <div className="left">
+                      {/* {nftListStatus
                       .filter((item) => item.value !== '')
                       .filter((item) => item.active === true)
                       .map((item, i) => (
@@ -648,171 +654,50 @@ export default memo(function TradingFloorPage(props: any) {
                           <div className="leftsss">{item.lable}</div>
                           <CloseOutlined className="right-icons" onClick={() => nftListClick(item, true)} />
                         </SelectionNumDiv>
-                      ))}
-                    {priceNumStatus && (
-                      <SelectionNumDiv>
-                        <div>
-                          <Image src={nftPriceIcon[selectPayActive.label]} className="icons" preview={false}></Image>
-                          {selectPayActive.label}:&nbsp;&nbsp;
-                          {typeof priceNum.min === 'number' && typeof priceNum.max === 'number' && (
-                            <>
-                              <span>{priceNum.min}</span>-<span>{priceNum.max}</span>
-                            </>
-                          )}{' '}
-                          {typeof priceNum.min === 'number' && typeof priceNum.max !== 'number' && (
-                            <>
-                              {'>='}
-                              <span>{priceNum.min}</span>
-                            </>
-                          )}{' '}
-                          {typeof priceNum.min !== 'number' && typeof priceNum.max === 'number' && (
-                            <>
-                              {'<='}
-                              <span>{priceNum.max}</span>
-                            </>
-                          )}
-                        </div>
+                      ))} */}
+                      {priceNumStatus && (
+                        <SelectionNumDiv>
+                          <div>
+                            <Image src={nftPriceIcon[selectPayActive.label]} className="icons" preview={false}></Image>
+                            {selectPayActive.label}:&nbsp;&nbsp;
+                            {typeof priceNum.min === 'number' && typeof priceNum.max === 'number' && (
+                              <>
+                                <span>{priceNum.min}</span>-<span>{priceNum.max}</span>
+                              </>
+                            )}{' '}
+                            {typeof priceNum.min === 'number' && typeof priceNum.max !== 'number' && (
+                              <>
+                                {'>='}
+                                <span>{priceNum.min}</span>
+                              </>
+                            )}{' '}
+                            {typeof priceNum.min !== 'number' && typeof priceNum.max === 'number' && (
+                              <>
+                                {'<='}
+                                <span>{priceNum.max}</span>
+                              </>
+                            )}
+                          </div>
 
-                        <CloseOutlined
-                          className="right-icons"
-                          onClick={() => {
-                            setPriceNum({ min: undefined, max: undefined })
-                            setPriceNumStatus(false)
-                          }}
-                        />
-                      </SelectionNumDiv>
-                    )}
-                    <Button className="reset-btn" type="text" onClick={() => reset()}>
-                      {t('market.left.reset')}
-                    </Button>
-                  </div>
-                </TitlteRight>
-                <div className="content-nft">
-                  <NftList>
-                    {!loading && (
-                      <>
-                        {tradList
-                          .filter((item) => {
-                            if (searchValue) return fuzzyMatch(item.name, searchValue)
-                            else return true
-                          })
-                          .filter((item) => {
-                            if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
-                            else return true
-                          })
-                          .filter((item) => {
-                            let obj = nftListStatus.find((item) => item.value === '1')
-                            return obj?.active ? item.isSell === true : true
-                          })
-                          .filter((item) => {
-                            if (priceNumStatus) {
-                              return item.unit === selectPayActive.label
-                            } else return true
-                          })
-                          .filter((item) => {
-                            if (priceNumStatus) {
-                              if (priceNum.min && priceNum.max)
-                                return (
-                                  Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
-                                  Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                                )
-                              else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
-                              else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                              else return true
-                            } else return true
-                          })
-                          .filter((item, i) => i < current * (tradePageSize || 16) && i >= (current - 1) * (tradePageSize || 16))
-                          .map((item, i) => (
-                            <div key={i} className="content-nft-info">
-                              <Card
-                                details={item}
-                                keys="tradingFloor"
-                                returnRefreshData={() => {}}
-                                returnClick={(s) => history.replace(`/market?key=${s.serialNumber}`)}
-                                returnBuyClcik={(s) => buyClcik(s)}
-                              />
-                            </div>
-                          ))}
-                      </>
-                    )}
-                    {loading && (
-                      <div className="loadings">
-                        <Spin tip="Loading..." />
-                      </div>
-                    )}
-                    {!loading &&
-                      tradList
-                        .filter((item) => {
-                          if (searchValue) return fuzzyMatch(item.name, searchValue)
-                          else return true
-                        })
-                        .filter((item) => {
-                          if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
-                          else return true
-                        })
-                        .filter((item) => {
-                          let obj = nftListStatus.find((item) => item.value === '1')
-                          return obj?.active ? item.isSell === true : true
-                        })
-                        .filter((item) => {
-                          if (priceNumStatus) {
-                            return item.unit === selectPayActive.label
-                          } else return true
-                        })
-                        .filter((item) => {
-                          if (priceNumStatus) {
-                            if (priceNum.min && priceNum.max)
-                              return (
-                                Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
-                                Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                              )
-                            else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
-                            else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                            else return true
-                          } else return true
-                        }).length === 0 && <NoData top={6} />}
-                  </NftList>
-                </div>
-
-                <div className="pagination-nft">
-                  {tradList
-                    .filter((item) => {
-                      if (searchValue) return fuzzyMatch(item.name, searchValue)
-                      else return true
-                    })
-                    .filter((item) => {
-                      if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
-                      else return true
-                    })
-                    .filter((item) => {
-                      let obj = nftListStatus.find((item) => item.value === '1')
-                      return obj?.active ? item.isSell === true : true
-                    })
-                    .filter((item) => {
-                      if (priceNumStatus) {
-                        return item.unit === selectPayActive.label
-                      } else return true
-                    })
-                    .filter((item) => {
-                      if (priceNumStatus) {
-                        if (priceNum.min && priceNum.max)
-                          return (
-                            Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
-                            Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                          )
-                        else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
-                        else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
-                        else return true
-                      } else return true
-                    }).length > 0 &&
-                    !loading && (
-                      <Pagination
-                        showTitle={false}
-                        current={current}
-                        defaultCurrent={current}
-                        defaultPageSize={tradePageSize || 16}
-                        total={
-                          tradList
+                          <CloseOutlined
+                            className="right-icons"
+                            onClick={() => {
+                              setPriceNum({ min: undefined, max: undefined })
+                              setPriceNumStatus(false)
+                            }}
+                          />
+                        </SelectionNumDiv>
+                      )}
+                      <Button className="reset-btn" type="text" onClick={() => reset()}>
+                        {t('market.left.reset')}
+                      </Button>
+                    </div>
+                  </TitlteRight>
+                  <div className="content-nft">
+                    <NftList>
+                      {!loading && (
+                        <>
+                          {tradList
                             .filter((item) => {
                               if (searchValue) return fuzzyMatch(item.name, searchValue)
                               else return true
@@ -831,7 +716,7 @@ export default memo(function TradingFloorPage(props: any) {
                               } else return true
                             })
                             .filter((item) => {
-                              if (priceNumStatus) {
+                              if (priceNumStatus && item.unit !== 'USDT') {
                                 if (priceNum.min && priceNum.max)
                                   return (
                                     Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
@@ -841,164 +726,338 @@ export default memo(function TradingFloorPage(props: any) {
                                 else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
                                 else return true
                               } else return true
-                            }).length
-                        }
-                        showSizeChanger={false}
-                        onChange={paginationChange}
-                      />
-                    )}
-                </div>
-              </TradingFloorContent>
-            </Col>
-          </Row>
-        </>
-      )}
-      {currentStatus === 'details' && (
-        <>
-          <TradingFloorTitle active={false}>
-            <Title>
-              <div
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setCurrentStatus('list')
-                  setCurrentDetails(currentDetailsInit)
-                  setCurent(1)
-                  history.replace('/market')
-                }}
-              >
-                <LeftCircleOutlined style={{ color: '#5746FE' }} />
-              </div>
-            </Title>
-          </TradingFloorTitle>
-          <ComLayoutTwo>
-            <Row gutter={{ xs: 12, sm: 24, lg: 68 }} className="details-shop">
-              <Col span={24} lg={12} md={8} className="details-shop-left">
-                <ImageDiv>
-                  {(type === '.jpg' || type === '.png' || type === '.gif' || type === '.svg') && (
-                    <Image src={currentDetails.image} preview={false} fallback={ImageError}></Image>
-                  )}
-                  {(type === '.mp4' || type === '.webm') && <video src={currentDetails.image} controls autoPlay loop></video>}
-                  {(type === '.mp3' || type === '.wav' || type === '.ogg') && (
-                    <audio controls>
-                      <source src={currentDetails.image} />
-                    </audio>
-                  )}
-                  {type === '.gltf' && <Modelviewer src={currentDetails.image} />}
-                </ImageDiv>
-                <DescribeDiv style={{ marginTop: '2.5rem' }}>
-                  <h3>{t('market.details.vice.title2')}</h3>
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title2.list1')}</div>
-                    {formatStrAddress(6, 4, SharedToken_ADDRESS || '')}
-                  </div>
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title2.list2')}</div>
-                    {t('market.details.vice.title2.list.info1')}
-                  </div>
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title2.list3')}</div>
-                    {Blockchain}
-                  </div>
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title2.list4')}</div>
-                    {t('market.details.vice.title2.list.info3')}
-                  </div>
-                </DescribeDiv>
-              </Col>
-              <Col span={24} lg={12} md={16} className="details-shop-right">
-                <CurrentThemeDiv>
-                  {t('market.details.theme.title')}
-                  {currentDetails.nameTheme}
-                </CurrentThemeDiv>
-                <h2>{currentDetails.name}</h2>
-                <h4>
-                  {t('market.details.theme.hold')}&nbsp;&nbsp;{formatStrAddress(6, 4, currentDetails.address || '')}
-                </h4>
-                <DescribeDiv>
-                  <h3>{t('market.details.price.title')}</h3>
-                  {currentDetails.isSell && (
-                    <div className="price-content">
-                      <PriceDiv style={{ color: nftPriceIconColor[currentDetails.unit || ''] }}>
-                        <Image src={nftPriceIcon[currentDetails.unit || '']} width="1.81rem" preview={false}></Image>
-                        {nftData.toWeiFromWei(currentDetails.price)}&nbsp;&nbsp;{currentDetails.unit}
-                      </PriceDiv>
-                      <h5>{t('market.details.price.title.vice')}</h5>
-                      {!active && <ConnectWallet status="shop" />}
-                      {active && (
-                        <Button className="my-home-btn-1 details-btns" onClick={() => buyClcik()}>
-                          {t('market.details.price.btn')}
-                        </Button>
+                            })
+                            .filter((item) => {
+                              if (priceNumStatus && item.unit === 'USDT') {
+                                if (priceNum.min && priceNum.max)
+                                  return (
+                                    Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min &&
+                                    Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                                  )
+                                else if (priceNum.min) return Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min
+                                else if (priceNum.max) return Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                                else return true
+                              } else return true
+                            })
+                            .filter((item, i) => i < current * (marketPageSize || 16) && i >= (current - 1) * (marketPageSize || 16))
+                            .map((item, i) => (
+                              <div key={i} className="content-nft-info">
+                                <Card
+                                  details={item}
+                                  keys="tradingFloor"
+                                  returnRefreshData={() => {}}
+                                  returnClick={(s) => history.replace(`/market?key=${s.serialNumber}`)}
+                                  returnBuyClcik={(s) => buyClcik(s)}
+                                  setLoading={(s) => setSpinLoading(s)}
+                                  setLoadingText={(s) => setLoadingText(s)}
+                                />
+                              </div>
+                            ))}
+                        </>
                       )}
-                    </div>
-                  )}
-                </DescribeDiv>
-                <DescribeDiv className="addDes">
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title3')}</div>
-                    <span style={{ width: '100%', textAlign: 'end' }}>{Number(currentDetails.royalty)}%</span>
+                      {loading && (
+                        <div className="loadings">
+                          <Spin tip="Loading..." />
+                        </div>
+                      )}
+                      {!loading &&
+                        tradList
+                          .filter((item) => {
+                            if (searchValue) return fuzzyMatch(item.name, searchValue)
+                            else return true
+                          })
+                          .filter((item) => {
+                            if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
+                            else return true
+                          })
+                          .filter((item) => {
+                            let obj = nftListStatus.find((item) => item.value === '1')
+                            return obj?.active ? item.isSell === true : true
+                          })
+                          .filter((item) => {
+                            if (priceNumStatus) {
+                              return item.unit === selectPayActive.label
+                            } else return true
+                          })
+                          .filter((item) => {
+                            if (priceNumStatus && item.unit !== 'USDT') {
+                              if (priceNum.min && priceNum.max)
+                                return (
+                                  Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
+                                  Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                                )
+                              else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
+                              else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                              else return true
+                            } else return true
+                          })
+                          .filter((item) => {
+                            if (priceNumStatus && item.unit === 'USDT') {
+                              if (priceNum.min && priceNum.max)
+                                return (
+                                  Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min &&
+                                  Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                                )
+                              else if (priceNum.min) return Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min
+                              else if (priceNum.max) return Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                              else return true
+                            } else return true
+                          }).length === 0 && <NoData top={6} />}
+                    </NftList>
                   </div>
-                  <div className="info">
-                    <div className="span">{t('market.details.vice.title4')}</div>
-                    <span style={{ width: '100%', textAlign: 'end' }}>{currentDetails.time}</span>
+
+                  <div className="pagination-nft">
+                    {tradList
+                      .filter((item) => {
+                        if (searchValue) return fuzzyMatch(item.name, searchValue)
+                        else return true
+                      })
+                      .filter((item) => {
+                        if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
+                        else return true
+                      })
+                      .filter((item) => {
+                        let obj = nftListStatus.find((item) => item.value === '1')
+                        return obj?.active ? item.isSell === true : true
+                      })
+                      .filter((item) => {
+                        if (priceNumStatus) {
+                          return item.unit === selectPayActive.label
+                        } else return true
+                      })
+                      .filter((item) => {
+                        if (priceNumStatus && item.unit !== 'USDT') {
+                          if (priceNum.min && priceNum.max)
+                            return (
+                              Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
+                              Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                            )
+                          else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
+                          else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                          else return true
+                        } else return true
+                      })
+                      .filter((item) => {
+                        if (priceNumStatus && item.unit === 'USDT') {
+                          if (priceNum.min && priceNum.max)
+                            return (
+                              Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min &&
+                              Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                            )
+                          else if (priceNum.min) return Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min
+                          else if (priceNum.max) return Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                          else return true
+                        } else return true
+                      }).length > 0 &&
+                      !loading && (
+                        <Pagination
+                          showTitle={false}
+                          current={current}
+                          defaultCurrent={current}
+                          defaultPageSize={marketPageSize || 16}
+                          total={
+                            tradList
+                              .filter((item) => {
+                                if (searchValue) return fuzzyMatch(item.name, searchValue)
+                                else return true
+                              })
+                              .filter((item) => {
+                                if (searchValue && item.nameTheme) return fuzzyMatch(item.name, searchValue)
+                                else return true
+                              })
+                              .filter((item) => {
+                                let obj = nftListStatus.find((item) => item.value === '1')
+                                return obj?.active ? item.isSell === true : true
+                              })
+                              .filter((item) => {
+                                if (priceNumStatus) {
+                                  return item.unit === selectPayActive.label
+                                } else return true
+                              })
+                              .filter((item) => {
+                                if (priceNumStatus && item.unit !== 'USDT') {
+                                  if (priceNum.min && priceNum.max)
+                                    return (
+                                      Number(nftData.toWeiFromWei(item.price)) >= priceNum.min &&
+                                      Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                                    )
+                                  else if (priceNum.min) return Number(nftData.toWeiFromWei(item.price)) >= priceNum.min
+                                  else if (priceNum.max) return Number(nftData.toWeiFromWei(item.price)) <= priceNum.max
+                                  else return true
+                                } else return true
+                              })
+                              .filter((item) => {
+                                if (priceNumStatus && item.unit === 'USDT') {
+                                  if (priceNum.min && priceNum.max)
+                                    return (
+                                      Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min &&
+                                      Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                                    )
+                                  else if (priceNum.min) return Number(nftData.toWeiFromMwei(item.price)) >= priceNum.min
+                                  else if (priceNum.max) return Number(nftData.toWeiFromMwei(item.price)) <= priceNum.max
+                                  else return true
+                                } else return true
+                              }).length
+                          }
+                          showSizeChanger={false}
+                          onChange={paginationChange}
+                        />
+                      )}
                   </div>
-                </DescribeDiv>
-                <DescribeDiv>
-                  <h3>{t('market.details.vice.title1')}</h3>
-                  {currentDetails.description && (
-                    <ul>
-                      <li>{currentDetails.description}</li>
-                    </ul>
-                  )}
-                  {!currentDetails.description && (
-                    <div style={{ marginBottom: '2.5rem' }}>
-                      <NoData top={0} />
-                    </div>
-                  )}
-                </DescribeDiv>
+                </TradingFloorContent>
               </Col>
             </Row>
-          </ComLayoutTwo>
-          <ComLayoutTwo style={{ marginBottom: '2.5rem' }}>
-            <Col span={24}>
-              <ShopDiv>
-                <h3>{t('market.list.title')}</h3>
-                {!detailsLoading && openBoxList.length > 0 && (
-                  <TableList>
-                    <thead>
-                      <tr>
-                        <th>{t('market.list.th1')}</th>
-                        <th>{t('market.list.th2')}</th>
-                        <th>{t('market.list.th3')}</th>
-                        <th>{t('market.list.th4')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {openBoxList.map((item, index) => (
-                        <tr key={index}>
-                          <td>
-                            <Image src={nftPriceIcon[item.unit || '']} width="0.75rem" preview={false}></Image>
-                            <span style={{ marginLeft: '0.63rem' }}>{item.price}</span>
-                          </td>
-                          <td>{formatStrAddress(6, 4, item.from)}</td>
-                          <td>{formatStrAddress(6, 4, item.to)}</td>
-                          <td style={{ color: '#5746FE' }}>{item.time}</td>
+          </>
+        )}
+        {currentStatus === 'details' && (
+          <>
+            <TradingFloorTitle active={false}>
+              <Title>
+                <div
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setCurrentStatus('list')
+                    setCurrentDetails(currentDetailsInit)
+                    setCurent(1)
+                    history.replace('/market')
+                  }}
+                >
+                  <LeftCircleOutlined style={{ color: '#5746FE' }} />
+                </div>
+              </Title>
+            </TradingFloorTitle>
+            <ComLayoutTwo>
+              <Row gutter={{ xs: 12, sm: 24, lg: 68 }} className="details-shop">
+                <Col span={24} lg={12} md={8} className="details-shop-left">
+                  <ImageDiv>
+                    {(type === '.jpg' || type === '.png' || type === '.gif' || type === '.svg') && (
+                      <Image src={currentDetails.image} preview={false} fallback={ImageError}></Image>
+                    )}
+                    {(type === '.mp4' || type === '.webm') && <video src={currentDetails.image} controls autoPlay loop></video>}
+                    {(type === '.mp3' || type === '.wav' || type === '.ogg') && (
+                      <audio controls>
+                        <source src={currentDetails.image} />
+                      </audio>
+                    )}
+                    {type === '.gltf' && <Modelviewer src={currentDetails.image} />}
+                  </ImageDiv>
+                  <DescribeDiv style={{ marginTop: '2.5rem' }}>
+                    <h3>{t('market.details.vice.title2')}</h3>
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title2.list1')}</div>
+                      {formatStrAddress(6, 4, currentDetails.isImport ? (currentDetails.contracts as any) : SharedToken_ADDRESS)}
+                    </div>
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title2.list2')}</div>
+                      {t('market.details.vice.title2.list.info1')}
+                    </div>
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title2.list3')}</div>
+                      {Blockchain}
+                    </div>
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title2.list4')}</div>
+                      {t('market.details.vice.title2.list.info3')}
+                    </div>
+                  </DescribeDiv>
+                </Col>
+                <Col span={24} lg={12} md={16} className="details-shop-right">
+                  <CurrentThemeDiv>
+                    {t('market.details.theme.title')}
+                    {currentDetails.nameTheme}
+                  </CurrentThemeDiv>
+                  <h2>{currentDetails.isDefault ? `${currentDetails.name}${currentDetails.tokenId}` : currentDetails.name}</h2>
+                  <h4>
+                    {t('market.details.theme.hold')}&nbsp;&nbsp;{formatStrAddress(6, 4, currentDetails.address || '')}
+                  </h4>
+                  <DescribeDiv>
+                    <h3>{t('market.details.price.title')}</h3>
+                    {currentDetails.isSell && (
+                      <div className="price-content">
+                        <PriceDiv style={{ color: nftPriceIconColor[currentDetails.unit || ''] }}>
+                          <Image src={nftPriceIcon[currentDetails.unit || '']} width="1.81rem" preview={false}></Image>
+                          {currentDetails.unit === 'USDT'
+                            ? nftData.toWeiFromMwei(currentDetails.price)
+                            : nftData.toWeiFromWei(currentDetails.price)}
+                          &nbsp;&nbsp;{currentDetails.unit}
+                        </PriceDiv>
+                        <h5>{t('market.details.price.title.vice')}</h5>
+                        {!active && <ConnectWallet status="shop" />}
+                        {active && (
+                          <Button className="my-home-btn-1 details-btns" onClick={() => buyClcik()}>
+                            {t('market.details.price.btn')}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </DescribeDiv>
+                  <DescribeDiv className="addDes">
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title3')}</div>
+                      <span style={{ width: '100%', textAlign: 'end' }}>{Number(currentDetails.royalty)}%</span>
+                    </div>
+                    <div className="info">
+                      <div className="span">{t('market.details.vice.title4')}</div>
+                      <span style={{ width: '100%', textAlign: 'end' }}>{currentDetails.time}</span>
+                    </div>
+                  </DescribeDiv>
+                  <DescribeDiv>
+                    <h3>{t('market.details.vice.title1')}</h3>
+                    {currentDetails.description && (
+                      <ul>
+                        <li>{currentDetails.description}</li>
+                      </ul>
+                    )}
+                    {!currentDetails.description && (
+                      <div style={{ marginBottom: '2.5rem' }}>
+                        <NoData top={0} />
+                      </div>
+                    )}
+                  </DescribeDiv>
+                </Col>
+              </Row>
+            </ComLayoutTwo>
+            <ComLayoutTwo style={{ marginBottom: '2.5rem' }}>
+              <Col span={24}>
+                <ShopDiv>
+                  <h3>{t('market.list.title')}</h3>
+                  {!detailsLoading && openBoxList.length > 0 && (
+                    <TableList>
+                      <thead>
+                        <tr>
+                          <th>{t('market.list.th1')}</th>
+                          <th>{t('market.list.th2')}</th>
+                          <th>{t('market.list.th3')}</th>
+                          <th>{t('market.list.th4')}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </TableList>
-                )}
-                {detailsLoading && (
-                  <div className="loadings">
-                    <Spin tip="Loading..." />
-                  </div>
-                )}
-                {!detailsLoading && openBoxList.length === 0 && <NoData top={0} />}
-              </ShopDiv>
-            </Col>
-          </ComLayoutTwo>
-        </>
-      )}
-      {isLoading && <Loading title="Purchasing" />}
-    </TradingFloorWrapper>
+                      </thead>
+                      <tbody>
+                        {openBoxList.map((item, index) => (
+                          <tr key={index}>
+                            <td>
+                              <Image src={nftPriceIcon[item.unit || '']} width="0.75rem" preview={false}></Image>
+                              <span style={{ marginLeft: '0.63rem' }}>{item.price}</span>
+                            </td>
+                            <td>{formatStrAddress(6, 4, item.from)}</td>
+                            <td>{formatStrAddress(6, 4, item.to)}</td>
+                            <td style={{ color: '#5746FE' }}>{item.time}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </TableList>
+                  )}
+                  {detailsLoading && (
+                    <div className="loadings">
+                      <Spin tip="Loading..." />
+                    </div>
+                  )}
+                  {!detailsLoading && openBoxList.length === 0 && <NoData top={0} />}
+                </ShopDiv>
+              </Col>
+            </ComLayoutTwo>
+          </>
+        )}
+      </TradingFloorWrapper>
+    </Spin>
   )
 })

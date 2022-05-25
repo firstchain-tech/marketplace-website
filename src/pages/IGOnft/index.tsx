@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { memo, useState, useEffect } from 'react'
+import React, { memo, useState, useEffect, useRef } from 'react'
 import { IGOnftWrapper, IGOnftTitle, Title, IGOnftContent, ContentList } from './styled'
 import { DescribeDiv } from '@/pages/Market/styled'
 import { Link } from 'react-router-dom'
@@ -26,6 +26,7 @@ const currentDetailsInit: ListType = {
 export default memo(function IGOnftPage(props: any) {
   const { t } = useTranslation()
   let history = useHistory()
+  const modalRef = useRef<any>(null)
 
   const [currentStatus, setCurrentStatus] = useState<'list' | 'details'>('list')
   const [currentDetails, setCurrentDetails] = useState<ListType>(currentDetailsInit)
@@ -88,10 +89,11 @@ export default memo(function IGOnftPage(props: any) {
       content: t('igonft.apply.copy.success'),
       className: 'message-global',
     })
+    setOnApplyShow(false)
   }
 
   return (
-    <IGOnftWrapper>
+    <IGOnftWrapper ref={modalRef}>
       {currentStatus === 'list' && (
         <>
           <IGOnftTitle>
@@ -194,6 +196,7 @@ export default memo(function IGOnftPage(props: any) {
         onCancel={() => setOnApplyShow(false)}
         width="36.88rem"
         centered
+        getContainer={modalRef.current}
         wrapClassName="wallets"
       >
         <h2>{t('igonft.apply.title')}</h2>

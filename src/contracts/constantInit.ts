@@ -1,6 +1,4 @@
 import Web3 from 'web3'
-// import WalletConnectProvider from '@walletconnect/ethereum-provider'
-// import { getActiveChainId } from '@/contracts/constant'
 import { useConstant, FundSplitter_ABI, Market_ABI, Categories_ABI, MarketSharedToken_ABI, USDT_ABI } from './constant'
 
 export interface ConstantBallTypes {
@@ -19,9 +17,9 @@ export interface ConstantInitTypes {
   Market_ADDRESS: string
   constant: ConstantBallTypes
   toWeiFromWei: (s: any) => void
+  toWeiFromMwei: (s: any) => void
   minimumSaleAmount: number
-  nftPageSize: number
-  tradePageSize: number
+  marketPageSize: number
   myNftPageSize: number
   license: string
   Blockchain: string
@@ -38,8 +36,7 @@ export class ConstantInit {
   Market_ADDRESS: string
   constant: ConstantBallTypes
   minimumSaleAmount: number
-  nftPageSize: number
-  tradePageSize: number
+  marketPageSize: number
   myNftPageSize: number
   license: string
   Blockchain: string
@@ -48,11 +45,6 @@ export class ConstantInit {
   apiKey: string
 
   constructor(provider: any, chainId: string) {
-    // let currentChainId: any = chainId
-    // console.log('provider: any, chainId: string', provider, chainId)
-    // if (provider instanceof WalletConnectProvider) {
-    //   console.log('prps', provider)
-    // }
     const { REACT_APP_ENV = 'prd' } = process.env
     const {
       USDT_ADDRESS,
@@ -81,18 +73,20 @@ export class ConstantInit {
       ContractMarket: new this.web3.eth.Contract(Market_ABI, Market_ADDRESS),
       ContractUsdt: new this.web3.eth.Contract(USDT_ABI, USDT_ADDRESS),
     }
-    this.license =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDBmMTIzNUNGRjVjMDYxMzFBNzk0MGZGMmJFYjc3QjEzNjcwODE1MUUiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTEyMzMzMjU0MjQsIm5hbWUiOiJRUU5GVCJ9.IN54ITNlC1pX5pfrTp5g5_5On82eX_qCDx8GeY-YRBQQ'
-
+    this.license = (process.env as any).REACT_APP_LICENSE
     console.log('REACT_APP_ENV', REACT_APP_ENV)
-    this.minimumSaleAmount = 0.000001
-    this.nftPageSize = 15
-    this.tradePageSize = 15
-    this.myNftPageSize = 15
+    this.minimumSaleAmount = (process.env as any).REACT_APP_MINIMUMSALEAMOUNT
+    this.marketPageSize = (process.env as any).REACT_APP_MARKETPAGESIZE
+    this.myNftPageSize = (process.env as any).REACT_APP_MYNFTPAGESIZE
   }
 
   toWeiFromWei = (number: any) => {
     let data = this.web3.utils.fromWei(number, 'ether')
+    return Number(data).toFixed(6)
+  }
+
+  toWeiFromMwei = (number: any) => {
+    let data = this.web3.utils.fromWei(number, 'mwei')
     return Number(data).toFixed(6)
   }
 }

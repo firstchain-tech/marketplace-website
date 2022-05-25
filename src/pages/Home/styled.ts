@@ -105,12 +105,11 @@ export const IntroduceList = styled.div`
 `
 
 export const ImageDiv = styled.div`
-  width: 20.13rem;
+  width: 100%;
   height: 20.13rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0.5rem 0;
 `
 
 export const ListInfo = styled.div`
@@ -128,9 +127,10 @@ export const ListInfo = styled.div`
   }
   img {
     width: 100%;
-    height: auto;
+    height: 20.13rem;
     max-height: 20.13rem;
-    border-radius: 0.63rem;
+    border-radius: 0.63rem 0.63rem 0 0;
+    object-fit: cover;
   }
   span {
     font-size: 1.25rem;

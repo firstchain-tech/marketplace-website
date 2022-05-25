@@ -54,9 +54,7 @@ const Web3ProviderPage = ({ children }: any) => {
   })
 
   const [web3Store, setWeb3Store] = useState<any>(() => {
-    let libraryInit = new StorageClient(
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDBmMTIzNUNGRjVjMDYxMzFBNzk0MGZGMmJFYjc3QjEzNjcwODE1MUUiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NTEyMzMzMjU0MjQsIm5hbWUiOiJRUU5GVCJ9.IN54ITNlC1pX5pfrTp5g5_5On82eX_qCDx8GeY-YRBQ',
-    )
+    let libraryInit = new StorageClient((process.env as any).REACT_APP_LICENSE)
     return libraryInit
   })
 

@@ -14,3 +14,8 @@ export const SaveWallet = (res: string) => ({
   type: actionTypes.SAVE_WALLET,
   wallet: res,
 })
+
+export const SaveLoading = (res: boolean) => ({
+  type: actionTypes.SAVE_IS_LOADING,
+  loading: res,
+})

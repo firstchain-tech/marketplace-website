@@ -60,14 +60,14 @@ export const useConstant = {
     SharedToken_ADDRESS: '0xfc9d43c6871407125eE53cFB04B9f5b18b81eeFc',
     Market_ADDRESS: '0x80e6DBd53Fc53fE22Eb30Ef864f1071fC6BDe9c1',
     Categories_ADDRESS: '0x6d8F17d45DC8e324dB6b05413CFB5467437A8A3b',
-    USDT_ADDRESS: '0x617D0a1f348be74605567394712818eCf0092322',
+    USDT_ADDRESS: '0x329DfE37F866367f0652786848885F3AFC90cCC6',
     payTokenOptions: [
       {
         value: '0x0000000000000000000000000000000000000000',
         label: 'ETH',
       },
       {
-        value: '0x617D0a1f348be74605567394712818eCf0092322',
+        value: '0x329DfE37F866367f0652786848885F3AFC90cCC6',
         label: 'USDT',
       },
     ],
@@ -82,14 +82,14 @@ export const useConstant = {
     SharedToken_ADDRESS: '0x98308B0348641436c8ebC3cbd4102C1CC1A5B92e',
     Market_ADDRESS: '0xBf9b757FA138A17DcD2789C9b2fe32B77115A521',
     Categories_ADDRESS: '0x356F50Dbf021af6E9702b37E26A128EFe617f73C',
-    USDT_ADDRESS: '0xCa6FcDffcA35dDAba72Ef45feAe6ef76561dfCC6',
+    USDT_ADDRESS: '0x660558d9e0858c077196542E50638F228690a963',
     payTokenOptions: [
       {
         value: '0x0000000000000000000000000000000000000000',
         label: 'BNB',
       },
       {
-        value: '0xCa6FcDffcA35dDAba72Ef45feAe6ef76561dfCC6',
+        value: '0x660558d9e0858c077196542E50638F228690a963',
         label: 'USDT',
       },
     ],

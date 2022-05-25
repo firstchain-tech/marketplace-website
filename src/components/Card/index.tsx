@@ -1,7 +1,7 @@
-import React, { memo, useState } from 'react'
+import React, { memo, useState, useRef } from 'react'
 import { CardWrapper, Span, MyNftContent, CardModalWrapper, SpanStatus3, CardBuilt, ImageDiv, CardModalImage } from './styled'
 import type { CardType } from '@/common/data.d'
-import { Image, Button, Row, Col, Modal, message, Select, Form, Divider, InputNumber } from 'antd'
+import { Image, Button, Row, Col, Modal, message, Select, Form, Divider, InputNumber, Spin } from 'antd'
 import { Adapth5, formatStrAddress, validateValue } from '@/utils'
 import { useWindowSizeHooks } from '@/hooks/useWindowSizeHooks'
 import { Web3Provider } from '@ethersproject/providers'
@@ -11,9 +11,10 @@ import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { ImageError } from '@/common/init'
 import type { ConstantInitTypes } from '@/contracts/constantInit'
-import Loading from '@/components/Loading'
 import useDataHooks from '@/hooks/useDataHooks'
+import DEFAULT_IMG from '@/assets/default.png'
 import { nftPriceIcon } from '@/contracts/init'
+import { MarketSharedToken_ABI } from '@/contracts/constant'
 
 const { Option } = Select
 
@@ -24,27 +25,29 @@ interface Type {
   returnRefreshData: () => void
   returnBuyClcik: (s: CardType) => void
   serviceCharge?: string
+  setLoading: (s: boolean) => void
+  setLoadingText: (s: string) => void
 }
 
 export default memo(function CardPage(pages: Type) {
   const context = useWeb3React<Web3Provider>()
   const { active } = context
   const myAddress = useSelector((state: any) => state.userInfo.address)
+  const modalRef = useRef<any>(null)
 
   const nftData: ConstantInitTypes = useDataHooks()
   const { minimumSaleAmount, constant, web3, SharedToken_ADDRESS, Market_ADDRESS, payTokenOptions } = nftData
 
   const { t } = useTranslation()
 
-  const { details, returnClick, keys, returnRefreshData, returnBuyClcik, serviceCharge = '2.5' } = pages
+  const { details, returnClick, keys, returnRefreshData, returnBuyClcik, serviceCharge = '2.5', setLoading, setLoadingText } = pages
   const [onMynftShow, setOnMynftShow] = useState(false)
-  const [isSellLoading, setIsSellloading] = useState(false)
-  const [isCancelLoading, setIsCancelLoading] = useState(false)
   const [uintSelect, setUintSelect] = useState<string>(() => {
     return payTokenOptions[0].label
   })
 
   const { windowSize } = useWindowSizeHooks()
+  const [sellLoading, setSellLoading] = useState(false)
 
   const switchClick = () => {
     if (keys === 'nft') {
@@ -63,7 +66,7 @@ export default memo(function CardPage(pages: Type) {
   /** my nft sell click */
   const sellClick = async (values: any) => {
     try {
-      setIsSellloading(true)
+      setSellLoading(true)
       let isAuthorize = await constant.ContractMarketSharedToken.methods.isApprovedForAll(myAddress, Market_ADDRESS).call()
       if (!isAuthorize) {
         constant.ContractMarketSharedToken.methods
@@ -75,32 +78,77 @@ export default memo(function CardPage(pages: Type) {
             console.log(hash)
           })
           .on('receipt', async (receipt: any) => {
-            sellImplement(values)
+            if (details.isImport) sellImportIsAuthorize(values)
+            else sellImplement(values)
           })
           .on('error', function (error: any, receipt: any) {
             message.error({
               content: error.message,
               className: 'message-global',
             })
-            setIsSellloading(false)
+            setSellLoading(false)
           })
       } else {
-        sellImplement(values)
+        if (details.isImport) sellImportIsAuthorize(values)
+        else sellImplement(values)
       }
     } catch (error) {
       console.log('error', error)
-      setIsSellloading(false)
+      setSellLoading(false)
+    }
+  }
+
+  const sellImportIsAuthorize = async (values: any) => {
+    try {
+      let constantWeb3721 = new web3.eth.Contract(MarketSharedToken_ABI, details.contracts)
+      let data721 = await constantWeb3721.methods.supportsInterface('0x80ac58cd').call()
+      if (data721) {
+        let isAuthorize = await constantWeb3721.methods.isApprovedForAll(myAddress, Market_ADDRESS).call()
+        if (!isAuthorize) {
+          constantWeb3721.methods
+            .setApprovalForAll(Market_ADDRESS, true)
+            .send({
+              from: myAddress,
+            })
+            .on('transactionHash', function (hash: any) {
+              console.log(hash)
+            })
+            .on('receipt', async (receipt: any) => {
+              sellImplement(values)
+            })
+            .on('error', function (error: any, receipt: any) {
+              message.error({
+                content: error.message,
+                className: 'message-global',
+              })
+              setSellLoading(false)
+            })
+        } else {
+          sellImplement(values)
+        }
+      } else setSellLoading(false)
+    } catch (error) {
+      console.log('error', error)
+      setSellLoading(false)
     }
   }
 
   const sellImplement = async (values: any) => {
     try {
-      let price = web3.utils.toWei(values.pledge.toString(), 'ether')
+      let price =
+        values.uint === 'USDT' ? web3.utils.toWei(values.pledge.toString(), 'mwei') : web3.utils.toWei(values.pledge.toString(), 'ether')
       console.log('values', values, details, price)
       let currency = payTokenOptions.find((item) => item.label === values.uint).value
       console.log('currency', currency)
       constant.ContractMarket.methods
-        .addCollectible(details.categoriesName, SharedToken_ADDRESS, details.tokenId, '1', currency, price)
+        .addCollectible(
+          details.categoriesName,
+          details.isImport ? details.contracts : SharedToken_ADDRESS,
+          details.tokenId,
+          '1',
+          currency,
+          price,
+        )
         .send({
           from: myAddress,
         })
@@ -113,6 +161,7 @@ export default memo(function CardPage(pages: Type) {
             className: 'message-global',
           })
           setOnMynftShow(false)
+          setSellLoading(false)
           returnRefreshData()
         })
         .on('error', function (error: any, receipt: any) {
@@ -120,11 +169,11 @@ export default memo(function CardPage(pages: Type) {
             content: error.message,
             className: 'message-global',
           })
-          setIsSellloading(false)
+          setSellLoading(false)
         })
     } catch (error) {
       console.log('error', error)
-      setIsSellloading(false)
+      setSellLoading(false)
     }
   }
 
@@ -135,7 +184,8 @@ export default memo(function CardPage(pages: Type) {
   const cancelClick = async () => {
     try {
       console.log('date', details)
-      setIsCancelLoading(true)
+      setLoadingText('Loading...')
+      setLoading(true)
       let isAuthorize = await constant.ContractMarketSharedToken.methods.isApprovedForAll(myAddress, Market_ADDRESS).call()
       if (!isAuthorize) {
         constant.ContractMarketSharedToken.methods
@@ -154,14 +204,14 @@ export default memo(function CardPage(pages: Type) {
               content: error.message,
               className: 'message-global',
             })
-            setIsCancelLoading(false)
+            setLoading(false)
           })
       } else {
         cancelImplement()
       }
     } catch (error) {
       console.log('error', error)
-      setIsCancelLoading(false)
+      setLoading(false)
     }
   }
 
@@ -178,7 +228,7 @@ export default memo(function CardPage(pages: Type) {
             content: t('mynft.message.tips3'),
             className: 'message-global',
           })
-          setIsCancelLoading(false)
+          setLoading(false)
           returnRefreshData()
         })
         .on('error', function (error: any, receipt: any) {
@@ -186,11 +236,11 @@ export default memo(function CardPage(pages: Type) {
             content: error.message,
             className: 'message-global',
           })
-          setIsCancelLoading(false)
+          setLoading(false)
         })
     } catch (error) {
       console.log('error', error)
-      setIsCancelLoading(false)
+      setLoading(false)
     }
   }
 
@@ -216,9 +266,16 @@ export default memo(function CardPage(pages: Type) {
   const uintOnChange = (e: any) => setUintSelect(e)
 
   return (
-    <CardWrapper onClick={switchClick}>
+    <CardWrapper onClick={switchClick} ref={modalRef}>
       <ImageDiv>
-        <Image src={details.cover || details.image} className="card-img" preview={false} onClick={switchClickTwo} fallback={ImageError} />
+        <Image
+          placeholder={<Image className="card-img" preview={false} src={DEFAULT_IMG} />}
+          src={details.cover || details.image}
+          className="card-img"
+          preview={false}
+          onClick={switchClickTwo}
+          fallback={ImageError}
+        />
       </ImageDiv>
       {keys === 'nft' && <Span>{details.name}</Span>}
       {keys === 'mynft' && (
@@ -229,7 +286,7 @@ export default memo(function CardPage(pages: Type) {
                 {t('myproject.theme.title')}&nbsp;&nbsp;{details.nameTheme}
               </Col>
               <Col span={24} className="three-span">
-                {details.name}
+                {details.isDefault ? `${details.name}${details.tokenId}` : details.name}
               </Col>
             </Row>
           </SpanStatus3>
@@ -243,7 +300,7 @@ export default memo(function CardPage(pages: Type) {
               {t('myproject.theme.title')}&nbsp;&nbsp;{details.nameTheme}
             </Col>
             <Col span={24} className="three-span" onClick={switchClickTwo}>
-              {details.name}
+              {details.isDefault ? `${details.name}${details.tokenId}` : details.name}
             </Col>
           </Row>
         </SpanStatus3>
@@ -255,13 +312,15 @@ export default memo(function CardPage(pages: Type) {
             <h5 style={{ color: '#363639' }}>{formatStrAddress(6, 4, details.address || '')}</h5>
           </div>
           <div className="divss dirce" onClick={switchClickTwo}>
-            <h4 title={`${details.name}`} style={{ color: '#80808B' }}>
-              <span>{details.name}</span>
+            <h4 title={details.isDefault ? `${details.name}${details.tokenId}` : details.name} style={{ color: '#80808B' }}>
+              <span>{details.isDefault ? `${details.name}${details.tokenId}` : details.name}</span>
             </h4>
             {details.isSell && (
               <h4 className="price-h4">
                 <Image src={nftPriceIcon[details.unit || '']} className="icosns" preview={false}></Image>
-                <span>{Number(nftData.toWeiFromWei(details.price))}</span>
+                <span>
+                  {details.unit === 'USDT' ? Number(nftData.toWeiFromMwei(details.price)) : Number(nftData.toWeiFromWei(details.price))}
+                </span>
                 {/* &nbsp;{details.unit} */}
               </h4>
             )}
@@ -312,7 +371,11 @@ export default memo(function CardPage(pages: Type) {
                       style={{ display: 'flex', alignItems: 'center' }}
                       preview={false}
                     ></Image>
-                    <span style={{ marginLeft: '0.25rem' }}>{Number(nftData.toWeiFromWei(details.price as any))}&nbsp;</span>
+                    {/* <span></span> */}
+                    <span style={{ marginLeft: '0.25rem' }}>
+                      {details.unit === 'USDT' ? Number(nftData.toWeiFromMwei(details.price)) : Number(nftData.toWeiFromWei(details.price))}
+                      &nbsp;
+                    </span>
                     {/* <span style={{ marginLeft: '0.25rem' }}>
                       {nftData.toWeiFromWei(details.price as any)}&nbsp;{details.unit}
                     </span> */}
@@ -335,68 +398,69 @@ export default memo(function CardPage(pages: Type) {
         onCancel={() => setOnMynftShow(false)}
         width="55.63rem"
         centered
+        getContainer={modalRef.current}
         bodyStyle={{ padding: '5rem 1.5rem' }}
       >
-        <Row gutter={[16, 32]} className="sell-row">
-          <Col span={24} lg={14}>
-            <Form onFinish={onFinish} initialValues={{ uint: payTokenOptions[0].label }}>
-              <h2>{t('mynft.sell.modal.title')}</h2>
-              <div className="pledge-content">
-                <div className="input-titles">
-                  <span>{t('mynft.sell.modal.input.title')}</span>
-                </div>
-                <div style={{ display: 'flex' }}>
-                  <Form.Item name="uint" rules={[{ required: true, message: t('mynft.form.item.rules1') }]}>
-                    <Select className="select-before" size="large" onChange={uintOnChange}>
-                      {payTokenOptions.map((item, index) => (
-                        <Option value={item.label} key={index}>
-                          {item.label}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item name="pledge" rules={[{ required: true, message: t('mynft.form.item.rules2') }]} className="inputs">
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      type="number"
-                      precision={6}
-                      min={0.000001}
-                      max={999999999.999999}
-                      placeholder={t('mynft.sell.modal.input.placeholder')}
-                      addonAfter={uintSelect}
-                      size="large"
-                    ></InputNumber>
-                  </Form.Item>
-                </div>
+        <Spin spinning={sellLoading} tip="SellLoading...">
+          <Row gutter={[16, 32]} className="sell-row">
+            <Col span={24} lg={14}>
+              <Form onFinish={onFinish} initialValues={{ uint: payTokenOptions[0].label }}>
+                <h2>{t('mynft.sell.modal.title')}</h2>
+                <div className="pledge-content">
+                  <div className="input-titles">
+                    <span>{t('mynft.sell.modal.input.title')}</span>
+                  </div>
+                  <div style={{ display: 'flex' }}>
+                    <Form.Item name="uint" rules={[{ required: true, message: t('mynft.form.item.rules1') }]}>
+                      <Select className="select-before" size="large" onChange={uintOnChange}>
+                        {payTokenOptions.map((item, index) => (
+                          <Option value={item.label} key={index}>
+                            {item.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item name="pledge" rules={[{ required: true, message: t('mynft.form.item.rules2') }]} className="inputs">
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        type="number"
+                        precision={6}
+                        min={0.000001}
+                        max={999999999.999999}
+                        placeholder={t('mynft.sell.modal.input.placeholder')}
+                        addonAfter={uintSelect}
+                        size="large"
+                      ></InputNumber>
+                    </Form.Item>
+                  </div>
 
-                <div className="input-titless">
-                  <span>{t('mynft.sell.modal.input.title1')}</span>
-                  <span>{Number(details.royalty)}%</span>
-                </div>
-                <div className="input-min-title">{t('mynft.sell.modal.input.titles')}</div>
+                  <div className="input-titless">
+                    <span>{t('mynft.sell.modal.input.title1')}</span>
+                    <span>{Number(details.royalty)}%</span>
+                  </div>
+                  <div className="input-min-title">{t('mynft.sell.modal.input.titles')}</div>
 
-                <div className="input-titless">
-                  <span>{t('mynft.sell.modal.input.title3')}</span>
-                  <span>{serviceCharge}%</span>
+                  <div className="input-titless">
+                    <span>{t('mynft.sell.modal.input.title3')}</span>
+                    <span>{serviceCharge}%</span>
+                  </div>
+                  <Button className="my-home-btn-3" htmlType="submit" type="primary">
+                    {t('mynft.sell.btn')}
+                  </Button>
                 </div>
-                <Button className="my-home-btn-3" htmlType="submit" type="primary">
-                  {t('mynft.sell.btn')}
-                </Button>
-              </div>
-            </Form>
-          </Col>
-          <Col span={24} lg={10}>
-            <CardModalWrapper>
-              <CardModalImage>
-                <Image src={details.cover || details.image} className="card-modal-img" preview={false} fallback={ImageError} />
-              </CardModalImage>
-              <div className="title">{details.name}</div>
-            </CardModalWrapper>
-          </Col>
-        </Row>
+              </Form>
+            </Col>
+            <Col span={24} lg={10}>
+              <CardModalWrapper>
+                <CardModalImage>
+                  <Image src={details.cover || details.image} className="card-modal-img" preview={false} fallback={ImageError} />
+                </CardModalImage>
+                <div className="title">{details.isDefault ? `${details.name}${details.tokenId}` : details.name}</div>
+              </CardModalWrapper>
+            </Col>
+          </Row>
+        </Spin>
       </Modal>
-      {isSellLoading && <Loading title="SellLoading" />}
-      {isCancelLoading && <Loading />}
     </CardWrapper>
   )
 })

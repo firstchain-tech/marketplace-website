@@ -41,10 +41,13 @@ export interface CardType {
   isSelfBuilt?: boolean
   collectibleHash?: string
   unit?: string
-  uniformPrice?: any
   royalty?: string
   royaltyAddress?: string
   time?: string
+  isImport?: boolean
+  contracts?: string
+  contracts_type?: number
+  isDefault?: boolean
 }
 /**
  * 可出售 -- 出售
@@ -55,6 +58,7 @@ export interface CardType {
  * collection 合约地址
  * isSelfBuilt 是否自建
  * unit 出售的单位 主要是 原生代币和usDT
+ * isDefault 是否加载失败显示默认值
  */
 
 export interface StatusType {

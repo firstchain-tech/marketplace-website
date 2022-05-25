@@ -1,6 +1,6 @@
 import React, { memo, useState, useRef } from 'react'
 import { CreateContent, TitleTrue, UploadCusDiv, TitleProject } from './styled'
-import { Input, Button, Form, Upload, message, Image, InputNumber } from 'antd'
+import { Input, Button, Form, Upload, message, Image, InputNumber, Spin } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import { getBase64 } from '@/utils'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,6 @@ import { FormInstance } from 'antd/es/form'
 import Modelviewer from '@/components/ModelViewer'
 import useWeb3StoreHooks from '@/hooks/useWeb3StoreHooks'
 import type { StorageClientTypes } from '@/contracts/web3StorageInit'
-import Loading from '@/components/Loading'
 import type { ConstantInitTypes } from '@/contracts/constantInit'
 import useDataHooks from '@/hooks/useDataHooks'
 import { useSelector } from 'react-redux'
@@ -36,8 +35,8 @@ export default memo(function CreateProjectPage(props: Type) {
   const { t } = useTranslation()
   let formRef = useRef<FormInstance>()
 
-  const [uploading, setUploading] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
+  const [loadingText, setLoadingText] = useState<string>('Loading...')
 
   const [imageUrl, setImageUrl] = useState<string>('')
   const [imageUrlSource, setImageUrlSource] = useState<string>('')
@@ -72,6 +71,7 @@ export default memo(function CreateProjectPage(props: Type) {
         })
         return false
       }
+      setLoadingText('Loading')
       setLoading(true)
       console.log('values', values)
       let obj = {
@@ -102,7 +102,7 @@ export default memo(function CreateProjectPage(props: Type) {
       let namebyte32 = getBytes32FromIpfsHash(data.cid)
       let royaltyFraction = new BigNumber(values.proportion).multipliedBy(100)
       constant.ContractMarketSharedToken.methods
-        .safeMint(namebyte32, values.earnAddress, Number(royaltyFraction))
+        .safeMint(categoriesName, namebyte32, values.earnAddress, Number(royaltyFraction))
         .send({
           from: myAddress,
         })
@@ -171,12 +171,14 @@ export default memo(function CreateProjectPage(props: Type) {
     }
     if (isType && isLt100M && str === '1') {
       let types1 = file.name.length > 5 ? (file.name.substring(file.name.length - 5) === '.gltf' ? '.gltf' : file.type) : file.type
-      setUploading(true)
+      setLoadingText('Uploading...')
+      setLoading(true)
       if (client) manualUploadOne(file, types1)
     }
     if (isType && isLt100M && str === '2') {
       let isType2 = file.type
-      setUploading(true)
+      setLoadingText('Uploading...')
+      setLoading(true)
       if (client) manualUploadTwo(file, isType2)
     }
     return false
@@ -194,10 +196,10 @@ export default memo(function CreateProjectPage(props: Type) {
       } else {
         setImageUrl(data.url)
       }
-      setUploading(false)
+      setLoading(false)
     } catch (error) {
       console.log(error)
-      setUploading(false)
+      setLoading(false)
     }
   }
 
@@ -212,10 +214,10 @@ export default memo(function CreateProjectPage(props: Type) {
       } else {
         setImageUrlCover(data.url)
       }
-      setUploading(false)
+      setLoading(false)
     } catch (error) {
       console.log(error)
-      setUploading(false)
+      setLoading(false)
     }
   }
 
@@ -250,116 +252,116 @@ export default memo(function CreateProjectPage(props: Type) {
   )
 
   return (
-    <CreateContent>
-      <TitleProject>
-        <span style={{ color: '#e6110c' }}>*</span>
-        <span>{t('create.from5.label')}:</span>
-        {programDetails.name}
-      </TitleProject>
-      <TitleTrue>
-        <span>*</span>
-        {t('create.title.f1')}
-      </TitleTrue>
-      <Form preserve={false} ref={formRef as any} name="create" onFinish={onFinish} initialValues={{ gender: 'new' }} layout="vertical">
-        <Form.Item
-          label={
-            <span>
-              <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
-              {t('create.from1.label')}
-            </span>
-          }
-          name="image"
-          valuePropName="fileList"
-          style={{ position: 'relative' }}
-          // rules={[{ required: true, message: t('create.from1.rules') }]}
-        >
-          {imageCid && uploadExhibit('1')}
-          <Upload.Dragger
-            className="uploader-files"
-            name="files"
-            beforeUpload={(s) => beforeUpload(s, '1')}
-            maxCount={1}
-            accept={acceptType}
-            showUploadList={false}
+    <Spin spinning={loading} tip={loadingText} className="antd-loadings">
+      <CreateContent>
+        <TitleProject>
+          <span style={{ color: '#e6110c' }}>*</span>
+          <span>{t('create.from5.label')}:</span>
+          {programDetails.name}
+        </TitleProject>
+        <TitleTrue>
+          <span>*</span>
+          {t('create.title.f1')}
+        </TitleTrue>
+        <Form preserve={false} ref={formRef as any} name="create" onFinish={onFinish} initialValues={{ gender: 'new' }} layout="vertical">
+          <Form.Item
+            label={
+              <span>
+                <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
+                {t('create.from1.label')}
+              </span>
+            }
+            name="image"
+            valuePropName="fileList"
+            style={{ position: 'relative' }}
+            // rules={[{ required: true, message: t('create.from1.rules') }]}
           >
-            {imageCid ? (
-              <Button type="text" size="large" className="modal-btns">
-                {t('create.upload.btn1')}
-              </Button>
-            ) : (
-              uploadButton
-            )}
-          </Upload.Dragger>
-        </Form.Item>
-        <TitleTrue>{t('create.from1.f1')}</TitleTrue>
-        {(imageUrlType === 'video/mp4' ||
-          imageUrlType === 'video/webm' ||
-          imageUrlType === 'audio/mpeg' ||
-          imageUrlType === 'audio/wav' ||
-          imageUrlType === 'audio/ogg' ||
-          imageUrlType === '.gltf') && (
-          <>
-            <Form.Item
-              label={
-                <span>
-                  <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
-                  {t('create.from2.label')}
-                </span>
-              }
-              name="cover"
-              valuePropName="fileList"
-              style={{ position: 'relative' }}
+            {imageCid && uploadExhibit('1')}
+            <Upload.Dragger
+              className="uploader-files"
+              name="files"
+              beforeUpload={(s) => beforeUpload(s, '1')}
+              maxCount={1}
+              accept={acceptType}
+              showUploadList={false}
             >
-              {imageCidCover && uploadExhibit('2')}
-              <Upload.Dragger
-                className="uploader-files"
-                name="files"
-                beforeUpload={(s) => beforeUpload(s, '2')}
-                maxCount={1}
-                accept={acceptTypeCover}
-                showUploadList={false}
+              {imageCid ? (
+                <Button type="text" size="large" className="modal-btns">
+                  {t('create.upload.btn1')}
+                </Button>
+              ) : (
+                uploadButton
+              )}
+            </Upload.Dragger>
+          </Form.Item>
+          <TitleTrue>{t('create.from1.f1')}</TitleTrue>
+          {(imageUrlType === 'video/mp4' ||
+            imageUrlType === 'video/webm' ||
+            imageUrlType === 'audio/mpeg' ||
+            imageUrlType === 'audio/wav' ||
+            imageUrlType === 'audio/ogg' ||
+            imageUrlType === '.gltf') && (
+            <>
+              <Form.Item
+                label={
+                  <span>
+                    <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
+                    {t('create.from2.label')}
+                  </span>
+                }
+                name="cover"
+                valuePropName="fileList"
+                style={{ position: 'relative' }}
               >
-                {imageCidCover ? (
-                  <Button type="text" size="large" className="modal-btns">
-                    {t('create.upload.btn1')}
-                  </Button>
-                ) : (
-                  uploadButton
-                )}
-              </Upload.Dragger>
-            </Form.Item>
-            <TitleTrue>{t('create.from2.f1')}</TitleTrue>
-          </>
-        )}
-        <Form.Item label={t('create.from3.label')} name="name" rules={[{ required: true, message: t('create.from3.rules') }]}>
-          <Input placeholder={t('create.from3.placeholder')} maxLength={10} />
-        </Form.Item>
-        <Form.Item label={t('create.from4.label')} name="describe">
-          <Input.TextArea autoSize={{ minRows: 6, maxRows: 8 }} showCount placeholder={t('create.from4.placeholder')} maxLength={200} />
-        </Form.Item>
-        <TitleTrue>{t('create.from4.f1')}</TitleTrue>
-        <Form.Item label={t('create.from6.label')} name="proportion" rules={[{ required: true, message: t('create.from6.rules') }]}>
-          <InputNumber
-            precision={2}
-            min={0}
-            max={30}
-            placeholder={t('create.from6.placeholder')}
-            addonAfter="%"
-            style={{ width: '100%' }}
-          />
-        </Form.Item>
-        <TitleTrue>{t('create.from6.f1')}</TitleTrue>
-        <Form.Item label={t('create.from7.label')} name="earnAddress" rules={[{ required: true, message: t('create.from7.rules') }]}>
-          <Input placeholder={t('create.from7.placeholder')} minLength={48} maxLength={48} />
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            {t('create.btn')}
-          </Button>
-        </Form.Item>
-      </Form>
-      {uploading && <Loading title="Uploading" />}
-      {loading && <Loading />}
-    </CreateContent>
+                {imageCidCover && uploadExhibit('2')}
+                <Upload.Dragger
+                  className="uploader-files"
+                  name="files"
+                  beforeUpload={(s) => beforeUpload(s, '2')}
+                  maxCount={1}
+                  accept={acceptTypeCover}
+                  showUploadList={false}
+                >
+                  {imageCidCover ? (
+                    <Button type="text" size="large" className="modal-btns">
+                      {t('create.upload.btn1')}
+                    </Button>
+                  ) : (
+                    uploadButton
+                  )}
+                </Upload.Dragger>
+              </Form.Item>
+              <TitleTrue>{t('create.from2.f1')}</TitleTrue>
+            </>
+          )}
+          <Form.Item label={t('create.from3.label')} name="name" rules={[{ required: true, message: t('create.from3.rules') }]}>
+            <Input placeholder={t('create.from3.placeholder')} maxLength={10} />
+          </Form.Item>
+          <Form.Item label={t('create.from4.label')} name="describe">
+            <Input.TextArea autoSize={{ minRows: 6, maxRows: 8 }} showCount placeholder={t('create.from4.placeholder')} maxLength={200} />
+          </Form.Item>
+          <TitleTrue>{t('create.from4.f1')}</TitleTrue>
+          <Form.Item label={t('create.from6.label')} name="proportion" rules={[{ required: true, message: t('create.from6.rules') }]}>
+            <InputNumber
+              precision={2}
+              min={0}
+              max={30}
+              placeholder={t('create.from6.placeholder')}
+              addonAfter="%"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <TitleTrue>{t('create.from6.f1')}</TitleTrue>
+          <Form.Item label={t('create.from7.label')} name="earnAddress" rules={[{ required: true, message: t('create.from7.rules') }]}>
+            <Input placeholder={t('create.from7.placeholder')} minLength={48} maxLength={48} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              {t('create.btn')}
+            </Button>
+          </Form.Item>
+        </Form>
+      </CreateContent>
+    </Spin>
   )
 })

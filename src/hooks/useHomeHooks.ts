@@ -3,12 +3,15 @@ import { CardType, ArrRequestType } from '@/common/data.d'
 import { readGetPastEvents, getIpfsHashFromBytes32, readGetApiEvents, GetWeb3StorageJsonOne } from '@/common'
 import type { ConstantInitTypes } from '@/contracts/constantInit'
 import useDataHooks from '@/hooks/useDataHooks'
+import { useSelector } from 'react-redux'
+import CID from 'cids'
 
 export const useHomeHooks = () => {
   const nftData: ConstantInitTypes = useDataHooks()
   const { constant, web3, apiKey, apiUrl, SharedToken_ADDRESS } = nftData
 
   const [homeList, setHomeList] = useState<CardType[]>([])
+  const { web3StorageList } = useSelector((state: any) => state.infoInfo)
 
   useEffect(() => {
     if (apiKey === '' && apiUrl === '') getList()
@@ -30,8 +33,16 @@ export const useHomeHooks = () => {
           if (transferData.length >= 2) continue
           let uri = await constant.ContractMarketSharedToken.methods.tokenURI(element.returnValues.tokenId).call()
           let cid = getIpfsHashFromBytes32(uri)
-          const { axiosData } = await GetWeb3StorageJsonOne(cid)
-          transferData.push({
+          let cidV1 = new CID(cid).toV1().toString('base32')
+          let web3StorageData = web3StorageList.filter((item: any) => item.cid === cidV1)
+          const axiosData =
+            web3StorageData && web3StorageData.length > 0
+              ? web3StorageData[0].jsonSource
+              : await (
+                  await GetWeb3StorageJsonOne(cidV1)
+                ).axiosData
+          let categoriesName = await constant.ContractMarketSharedToken.methods.collectionURI(element.returnValues.tokenId).call()
+          let obj: any = {
             tokenId: element.returnValues.tokenId,
             index: i,
             serialNumber: `create${element.returnValues.tokenId.toString()}`,
@@ -41,10 +52,12 @@ export const useHomeHooks = () => {
             image: axiosData.imageFiles,
             cover: axiosData.coverFiles,
             description: axiosData.description,
-            categoriesName: axiosData.categoriesName,
+            categoriesName,
             status: '1',
             blockNumber: element.blockNumber,
-          })
+          }
+          if (axiosData.isDefault) obj.isDefault = axiosData.isDefault
+          transferData.push(obj)
         }
       }
       setHomeList(transferData)
@@ -79,8 +92,16 @@ export const useHomeHooks = () => {
           if (transferData.length >= 2) continue
           let uri = await constant.ContractMarketSharedToken.methods.tokenURI(data.tokenId).call()
           let cid = getIpfsHashFromBytes32(uri)
-          const { axiosData } = await GetWeb3StorageJsonOne(cid)
-          transferData.push({
+          let cidV1 = new CID(cid).toV1().toString('base32')
+          let web3StorageData = web3StorageList.filter((item: any) => item.cid === cidV1)
+          const axiosData =
+            web3StorageData && web3StorageData.length > 0
+              ? web3StorageData[0].jsonSource
+              : await (
+                  await GetWeb3StorageJsonOne(cidV1)
+                ).axiosData
+          let categoriesName = await constant.ContractMarketSharedToken.methods.collectionURI(data.tokenId).call()
+          let obj: any = {
             tokenId: data.tokenId,
             index: i,
             serialNumber: `create${data.tokenId.toString()}`,
@@ -90,10 +111,12 @@ export const useHomeHooks = () => {
             image: axiosData.imageFiles,
             cover: axiosData.coverFiles,
             description: axiosData.description,
-            categoriesName: axiosData.categoriesName,
+            categoriesName,
             status: '1',
             blockNumber,
-          })
+          }
+          if (axiosData.isDefault) obj.isDefault = axiosData.isDefaul
+          transferData.push(obj)
         }
       }
       setHomeList(transferData)

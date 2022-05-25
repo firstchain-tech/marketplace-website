@@ -1,11 +1,10 @@
 import React, { memo, useState, useRef } from 'react'
 import { CreateContent, TitleTrue, UploadCusDiv } from './styled'
-import { Input, Button, Form, Col, Row, Upload, message, Image } from 'antd'
+import { Input, Button, Form, Col, Row, Upload, message, Image, Spin } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import { getBase64 } from '@/utils'
 import { useTranslation } from 'react-i18next'
 import { FormInstance } from 'antd/es/form'
-import Loading from '@/components/Loading'
 import useWeb3StoreHooks from '@/hooks/useWeb3StoreHooks'
 import type { StorageClientTypes } from '@/contracts/web3StorageInit'
 import { useSelector } from 'react-redux'
@@ -26,7 +25,9 @@ export default memo(function CreateOrEditPage(props: Type) {
   const myAddress = useSelector((state: any) => state.userInfo.address)
 
   const nftData: ConstantInitTypes = useDataHooks()
-  const { constant } = nftData
+  const { constant, SharedToken_ADDRESS } = nftData
+  const [spinLoading, setLoading] = useState(false)
+  const [loadingText, setLoadingText] = useState<string>('Loading...')
 
   const { t } = useTranslation()
   let formRef = useRef<FormInstance>()
@@ -34,8 +35,6 @@ export default memo(function CreateOrEditPage(props: Type) {
   const [imageUrlCover, setImageUrlCover] = useState<string>('')
   const [imageCidCover, setImageCidCover] = useState<any>(undefined)
   const [imageUrlCoverSource, setImageUrlCoverSource] = useState<string>('')
-  const [uploading, setUploading] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
 
   const onFinish = async (values: any) => {
     try {
@@ -48,6 +47,7 @@ export default memo(function CreateOrEditPage(props: Type) {
         return false
       }
       console.log(values)
+      setLoadingText('Loading...')
       setLoading(true)
       let obj = {
         name: values.name,
@@ -72,7 +72,7 @@ export default memo(function CreateOrEditPage(props: Type) {
       console.log('cover', data)
       let namebyte32 = getBytes32FromIpfsHash(data.cid)
       constant.ContractCategories.methods
-        .add(namebyte32)
+        .add(namebyte32, SharedToken_ADDRESS)
         .send({
           from: myAddress,
         })
@@ -127,7 +127,8 @@ export default memo(function CreateOrEditPage(props: Type) {
     }
     if (isType && isLt100M) {
       let isType2 = file.type
-      setUploading(true)
+      setLoadingText('Uploading...')
+      setLoading(true)
       if (client) manualUpload(file, isType2)
     }
     return false
@@ -144,10 +145,10 @@ export default memo(function CreateOrEditPage(props: Type) {
       } else {
         setImageUrlCover(data.url)
       }
-      setUploading(false)
+      setLoading(false)
     } catch (error) {
       console.log(error)
-      setUploading(false)
+      setLoading(false)
     }
   }
 
@@ -167,59 +168,59 @@ export default memo(function CreateOrEditPage(props: Type) {
   )
 
   return (
-    <CreateContent>
-      <Row>
-        <Col span={24}>
-          <TitleTrue>
-            <span>*</span>
-            {t('create.title.f1')}
-          </TitleTrue>
-          <Form preserve={false} ref={formRef as any} name="create" onFinish={onFinish} layout="vertical">
-            <Form.Item
-              label={
-                <span>
-                  <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
-                  {t('create.from2.label')}
-                </span>
-              }
-              name="cover"
-              valuePropName="fileList"
-              style={{ position: 'relative' }}
-              // rules={[{ required: true, message: t('create.from2.rules') }]}
-            >
-              {imageCidCover && uploadExhibit}
-              <Upload.Dragger
-                className="uploader-files1"
-                name="files"
-                beforeUpload={beforeUpload}
-                maxCount={1}
-                accept={acceptTypeCover}
-                showUploadList={false}
-                action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+    <Spin spinning={spinLoading} tip={loadingText} className="antd-loadings">
+      <CreateContent>
+        <Row>
+          <Col span={24}>
+            <TitleTrue>
+              <span>*</span>
+              {t('create.title.f1')}
+            </TitleTrue>
+            <Form preserve={false} ref={formRef as any} name="create" onFinish={onFinish} layout="vertical">
+              <Form.Item
+                label={
+                  <span>
+                    <span style={{ color: '#ff4d4f', marginRight: '4px' }}>*</span>
+                    {t('create.from2.label')}
+                  </span>
+                }
+                name="cover"
+                valuePropName="fileList"
+                style={{ position: 'relative' }}
+                // rules={[{ required: true, message: t('create.from2.rules') }]}
               >
-                {imageCidCover ? (
-                  <Button type="text" size="large" className="modal-btns">
-                    {t('create.upload.btn1')}
-                  </Button>
-                ) : (
-                  uploadButton
-                )}
-              </Upload.Dragger>
-            </Form.Item>
-            <TitleTrue>{t('create.from2.f1')}</TitleTrue>
-            <Form.Item label={t('create.from3.label')} name="name" rules={[{ required: true, message: t('create.from3.rules') }]}>
-              <Input placeholder={t('create.from3.placeholder')} maxLength={10} />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                {t('create.btn')}
-              </Button>
-            </Form.Item>
-          </Form>
-        </Col>
-      </Row>
-      {uploading && <Loading title="Uploading" />}
-      {loading && <Loading />}
-    </CreateContent>
+                {imageCidCover && uploadExhibit}
+                <Upload.Dragger
+                  className="uploader-files1"
+                  name="files"
+                  beforeUpload={beforeUpload}
+                  maxCount={1}
+                  accept={acceptTypeCover}
+                  showUploadList={false}
+                  action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                >
+                  {imageCidCover ? (
+                    <Button type="text" size="large" className="modal-btns">
+                      {t('create.upload.btn1')}
+                    </Button>
+                  ) : (
+                    uploadButton
+                  )}
+                </Upload.Dragger>
+              </Form.Item>
+              <TitleTrue>{t('create.from2.f1')}</TitleTrue>
+              <Form.Item label={t('create.from3.label')} name="name" rules={[{ required: true, message: t('create.from3.rules') }]}>
+                <Input placeholder={t('create.from3.placeholder')} maxLength={10} />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  {t('create.btn')}
+                </Button>
+              </Form.Item>
+            </Form>
+          </Col>
+        </Row>
+      </CreateContent>
+    </Spin>
   )
 })
