@@ -58,49 +58,54 @@ export const useWeb3StorageLocalHooks = (props: Type) => {
   // }
 
   const getList = async (localWeb3StorageList: any[]) => {
-    if (localWeb3StorageList.length === 0) localStorage.setItem('web3storage_key', (process.env as any).REACT_APP_LICENSE)
-    let axiosUploadList: { cid: string; name: string }[] = []
-    for await (const upload of client.list()) {
-      const ext = upload.name.split('.').pop()
-      if (ext === 'json' && upload.pins.length > 0) {
-        // let cid = new CID(upload.cid).toV1().toString('base58btc')
-        let errArr = upload.pins.filter((item: any) => item.status !== 'Pinned')
-        if (errArr.length === 0) axiosUploadList.push({ cid: upload.cid, name: upload.name })
+    try {
+      if (localWeb3StorageList.length === 0) localStorage.setItem('web3storage_key', (process.env as any).REACT_APP_LICENSE)
+      let axiosUploadList: { cid: string; name: string }[] = []
+      for await (const upload of client.list()) {
+        const ext = upload.name.split('.').pop()
+        if (ext === 'json' && upload.pins.length > 0) {
+          // let cid = new CID(upload.cid).toV1().toString('base58btc')
+          let errArr = upload.pins.filter((item: any) => item.status !== 'Pinned')
+          if (errArr.length === 0) axiosUploadList.push({ cid: upload.cid, name: upload.name })
+        }
       }
-    }
 
-    let arrList: { cid: string; jsonSource: any }[] = []
-    let NoLocalList = axiosUploadList.filter((item) => !localWeb3StorageList.some((ele) => ele.cid === item.cid))
-    let YesLocalList = localWeb3StorageList.filter((item) => axiosUploadList.some((ele) => ele.cid === item.cid))
-    for (let i = 0; i < NoLocalList.length; i++) {
-      let item = NoLocalList[i]
-      let axiosDataFetch = await axios.get(`https://api.web3.storage/car/${item.cid}`, {
-        headers: {
-          'Content-Type': 'application/vnd.ipld.car',
-          Authorizations: `Bearer ${(process.env as any).REACT_APP_LICENSE}`,
-        },
-      })
-      let json = axiosDataFetch.data.substr(axiosDataFetch.data.indexOf(`{"name`), axiosDataFetch.data.length)
-      if (isJson(json))
-        arrList.push({
-          cid: item.cid,
-          jsonSource: await JSON.parse(json),
+      let arrList: { cid: string; jsonSource: any }[] = []
+      let NoLocalList = axiosUploadList.filter((item) => !localWeb3StorageList.some((ele) => ele.cid === item.cid))
+      let YesLocalList = localWeb3StorageList.filter((item) => axiosUploadList.some((ele) => ele.cid === item.cid))
+      for (let i = 0; i < NoLocalList.length; i++) {
+        let item = NoLocalList[i]
+        let axiosDataFetch = await axios.get(`https://api.web3.storage/car/${item.cid}`, {
+          headers: {
+            'Content-Type': 'application/vnd.ipld.car',
+            Authorizations: `Bearer ${(process.env as any).REACT_APP_LICENSE}`,
+          },
         })
-    }
-    let list = [...YesLocalList, ...arrList]
-
-    if (list.length > 0) {
-      let sizeObj = getLocalStorageSize(JSON.stringify(list))
-      let sizeArrLength = Math.ceil(sizeObj.size / 5242880)
-      let newResult = await getArrGrouping(list, Math.ceil(list.length / sizeArrLength))
-      localStorage.setItem('web3storage_number', newResult.length.toString())
-      for (let i = 0; i < newResult.length; i++) {
-        localStorage.setItem(`web3storage_list_${i}`, JSON.stringify(newResult[i]))
+        console.log('axiosDataFetch', axiosDataFetch)
+        let json = axiosDataFetch.data.substr(axiosDataFetch.data.indexOf(`{"name`), axiosDataFetch.data.length)
+        if (isJson(json))
+          arrList.push({
+            cid: item.cid,
+            jsonSource: await JSON.parse(json),
+          })
       }
-    }
+      let list = [...YesLocalList, ...arrList]
 
-    dispatch(SaveInfoWeb3Storage(list))
-    setLoading(false)
+      if (list.length > 0) {
+        let sizeObj = getLocalStorageSize(JSON.stringify(list))
+        let sizeArrLength = Math.ceil(sizeObj.size / 5242880)
+        let newResult = await getArrGrouping(list, Math.ceil(list.length / sizeArrLength))
+        localStorage.setItem('web3storage_number', newResult.length.toString())
+        for (let i = 0; i < newResult.length; i++) {
+          localStorage.setItem(`web3storage_list_${i}`, JSON.stringify(newResult[i]))
+        }
+      }
+
+      dispatch(SaveInfoWeb3Storage(list))
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+    }
   }
 
   const getLocalStorageSize = (str: string) => {
